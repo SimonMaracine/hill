@@ -1,0 +1,71 @@
+{
+    "version": 4,
+    "configurePresets": [
+        {
+            "name": "default",
+            "binaryDir": "${sourceDir}/build/dev",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "HILL_DISTRIBUTION": "OFF",
+                "HILL_BUILD_TESTS": "ON"
+            }
+        },
+        {
+            "name": "conf-dev-nix",
+            "inherits": "default"
+        },
+        {
+            "name": "conf-dev-win",
+            "inherits": "default"
+        },
+        {
+            "name": "conf-dist-nix",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build/dist",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "HILL_DISTRIBUTION": "ON",
+                "HILL_BUILD_TESTS": "OFF"
+            }
+        },
+        {
+            "name": "conf-dist-win",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build/dist",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "HILL_DISTRIBUTION": "ON",
+                "HILL_BUILD_TESTS": "OFF"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "build-dev-nix",
+            "configurePreset": "conf-dev-nix",
+            "jobs": 4
+        },
+        {
+            "name": "build-dev-win",
+            "configurePreset": "conf-dev-win",
+            "jobs": 4,
+            "configuration": "Debug"
+        },
+        {
+            "name": "build-dist-nix",
+            "configurePreset": "conf-dist-nix",
+            "jobs": 8,
+            "cleanFirst": true
+        },
+        {
+            "name": "build-dist-win",
+            "configurePreset": "conf-dist-win",
+            "jobs": 8,
+            "configuration": "Release",
+            "cleanFirst": true
+        }
+    ]
+}
