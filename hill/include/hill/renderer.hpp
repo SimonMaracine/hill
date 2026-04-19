@@ -26,5 +26,10 @@ namespace hill::renderer {
 
         const imgui::ImGui* m_imgui {};
         configuration::Configuration m_configuration;
+
+        unsigned int m_vertex_buffer {};
+        unsigned int m_index_buffer {};
+        unsigned int m_vertex_array {};
+        unsigned int m_shader_program {};
     };
 }
