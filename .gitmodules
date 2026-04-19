@@ -1,3 +1,7 @@
 [submodule "tests/sdl/extern/sdl"]
 	path = tests/sdl/extern/sdl
 	url = https://github.com/libsdl-org/SDL
+[submodule "hill/extern/imgui"]
+	path = hill/extern/imgui
+	url = https://github.com/ocornut/imgui/
+	branch = docking

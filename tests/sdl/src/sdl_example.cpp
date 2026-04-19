@@ -5,9 +5,12 @@
 #include <print>
 
 #include <SDL3/SDL.h>
+#include <backends/imgui_impl_sdl3.h>
+#include <backends/imgui_impl_opengl3.h>
 #include <hill/graphics_api.hpp>
 
-SdlExample::SdlExample() {
+SdlExample::SdlExample()
+    : m_renderer(*this) {
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
         throw std::runtime_error(std::format("SDL_InitSubSystem: %s", SDL_GetError()));
     }
@@ -53,11 +56,11 @@ SdlExample::SdlExample() {
     hill::graphics_api::initialize(SDL_GL_GetProcAddress);
 
     if (!SDL_GL_SetSwapInterval(1)) {
-
+        std::println(stderr, "SDL_GL_SetSwapInterval: {}", SDL_GetError());
     }
 
     if (!SDL_SetWindowMinimumSize(m_window, 640, 360)) {
-
+        std::println(stderr, "SDL_SetWindowMinimumSize: {}", SDL_GetError());
     }
 }
 
@@ -65,6 +68,25 @@ SdlExample::~SdlExample() {
     SDL_GL_DestroyContext(static_cast<SDL_GLContext>(m_context));
     SDL_DestroyWindow(m_window);
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
+}
+
+void SdlExample::initialize() const {
+    ImGui_ImplSDL3_InitForOpenGL(m_window, m_context);
+    ImGui_ImplOpenGL3_Init("#version 430 core");
+}
+
+void SdlExample::uninitialize() const {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+}
+
+void SdlExample::begin() const {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+}
+
+void SdlExample::end(ImDrawData* draw_data) const {
+    ImGui_ImplOpenGL3_RenderDrawData(draw_data);
 }
 
 void SdlExample::run() {
@@ -80,6 +102,8 @@ void SdlExample::run() {
         SDL_Event event;
 
         while (SDL_PollEvent(&event)) {
+            ImGui_ImplSDL3_ProcessEvent(&event);
+
             switch (event.type) {
                 case SDL_EVENT_QUIT:
                     m_running = false;

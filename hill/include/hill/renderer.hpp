@@ -1,12 +1,13 @@
 #pragma once
 
 #include "hill/configuration.hpp"
+#include "hill/imgui.hpp"
 
 namespace hill::renderer {
     class Renderer {
     public:
-        Renderer() = default;
-        explicit Renderer(const configuration::Configuration& configuration);
+        explicit Renderer(const imgui::ImGui& imgui);
+        Renderer(const imgui::ImGui& imgui, const configuration::Configuration& configuration);
         ~Renderer();
 
         Renderer(const Renderer&) = delete;
@@ -18,6 +19,12 @@ namespace hill::renderer {
         void uninitialize();
         void render();
     private:
+        void imgui_initialize() const;
+        void imgui_uninitialize() const;
+        void imgui_render();
+        void imgui();
+
+        const imgui::ImGui* m_imgui {};
         configuration::Configuration m_configuration;
     };
 }
