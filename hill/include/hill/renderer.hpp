@@ -18,6 +18,7 @@ namespace hill::renderer {
         void initialize();
         void uninitialize();
         void render();
+        void window_resize(int width, int height);
     private:
         void imgui_initialize() const;
         void imgui_uninitialize() const;

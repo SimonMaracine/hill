@@ -125,6 +125,10 @@ R"(
         imgui_render();
     }
 
+    void Renderer::window_resize(int width, int height) {
+        glViewport(0, 0, width, height);
+    }
+
     void Renderer::imgui_initialize() const {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();

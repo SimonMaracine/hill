@@ -108,6 +108,9 @@ void SdlExample::run() {
                 case SDL_EVENT_QUIT:
                     m_running = false;
                     break;
+                case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+                    m_renderer.window_resize(event.window.data1, event.window.data2);
+                    break;
             }
         }
 
