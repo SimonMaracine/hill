@@ -43,6 +43,8 @@ namespace hill::renderer {
 
         float m_background_color[3] { 0.4f, 0.1f, 0.6f };
 
+        double m_render_frame_time {};
+
         friend class editor::Editor;
     };
 }

@@ -2,12 +2,16 @@
 
 #include <glad/gl.h>
 
+#include "hill/primitives_registry.hpp"
+
 namespace hill::vertex_buffer {
     VertexBuffer::VertexBuffer() {
         glGenBuffers(1, &m_vertex_buffer);
+        primitives_registry::Registry::get().add_vertex_buffer(m_vertex_buffer);
     }
 
     VertexBuffer::~VertexBuffer() {
+        primitives_registry::Registry::get().remove_vertex_buffer(m_vertex_buffer);
         glDeleteBuffers(1, &m_vertex_buffer);
     }
 

@@ -4,6 +4,8 @@
 
 #include <glad/gl.h>
 
+#include "hill/primitives_registry.hpp"
+
 namespace hill::vertex_array {
     static constexpr unsigned int type_enum(Type type) {
         switch (type) {
@@ -27,9 +29,11 @@ namespace hill::vertex_array {
 
     VertexArray::VertexArray() {
         glGenVertexArrays(1, &m_vertex_array);
+        primitives_registry::Registry::get().add_vertex_array(m_vertex_array);
     }
 
     VertexArray::~VertexArray() {
+        primitives_registry::Registry::get().remove_vertex_array(m_vertex_array);
         glDeleteVertexArrays(1, &m_vertex_array);
     }
 

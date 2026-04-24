@@ -2,12 +2,16 @@
 
 #include <glad/gl.h>
 
+#include "hill/primitives_registry.hpp"
+
 namespace hill::element_buffer {
     ElementBuffer::ElementBuffer() {
         glGenBuffers(1, &m_element_buffer);
+        primitives_registry::Registry::get().add_element_buffer(m_element_buffer);
     }
 
     ElementBuffer::~ElementBuffer() {
+        primitives_registry::Registry::get().remove_element_buffer(m_element_buffer);
         glDeleteBuffers(1, &m_element_buffer);
     }
 

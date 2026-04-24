@@ -5,6 +5,7 @@
 #include "hill/graphics_api.hpp"
 #include "hill/renderer_command.hpp"
 #include "hill/debug.hpp"
+#include "hill/primitives_registry.hpp"
 
 namespace hill::renderer {
     Renderer::Renderer(imgui::ImGui& imgui)
@@ -19,6 +20,7 @@ namespace hill::renderer {
         }
 
         imgui_initialize();
+        primitives_registry::Registry::initialize();
 
         constexpr float vertices[] = {
             0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
@@ -98,6 +100,7 @@ R"(
         m_element_buffer.reset();
         m_vertex_buffer.reset();
 
+        primitives_registry::Registry::uninitialize();
         imgui_uninitialize();
     }
 

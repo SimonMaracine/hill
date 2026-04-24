@@ -18,8 +18,9 @@ target_sources(
         "src/glad.cpp"
         "src/graphics_api.cpp"
         "src/mesh.cpp"
-        "src/renderer_command.cpp"
+        "src/primitives_registry.cpp"
         "src/renderer.cpp"
+        "src/renderer_command.cpp"
     PUBLIC
         FILE_SET HEADERS
         BASE_DIRS
@@ -37,8 +38,9 @@ target_sources(
             "include/hill/graphics_api.hpp"
             "include/hill/imgui.hpp"
             "include/hill/mesh.hpp"
-            "include/hill/renderer_command.hpp"
+            "include/hill/primitives_registry.hpp"
             "include/hill/renderer.hpp"
+            "include/hill/renderer_command.hpp"
 )
 
 target_link_libraries(hill PRIVATE glad)

@@ -6,6 +6,8 @@
 
 #include <glad/gl.h>
 
+#include "hill/primitives_registry.hpp"
+
 namespace hill::shader {
     unsigned int shader_type_enum(ShaderType shader_type) {
         switch (shader_type) {
@@ -24,9 +26,12 @@ namespace hill::shader {
         if (!m_shader) {
             throw ShaderError("Could not create shader");
         }
+
+        primitives_registry::Registry::get().add_shader(m_shader);
     }
 
     Shader::~Shader() {
+        primitives_registry::Registry::get().remove_shader(m_shader);
         glDeleteShader(m_shader);
     }
 
@@ -78,9 +83,12 @@ namespace hill::shader {
         if (!m_program) {
             throw ShaderError("Could not create program");
         }
+
+        primitives_registry::Registry::get().add_program(m_program);
     }
 
     Program::~Program() {
+        primitives_registry::Registry::get().remove_program(m_program);
         glDeleteProgram(m_program);
     }
 
