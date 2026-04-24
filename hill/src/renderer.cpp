@@ -1,9 +1,9 @@
 #include "hill/renderer.hpp"
 
-#include <glad/gl.h>  // FIXME remove
 #include <imgui.h>
 
 #include "hill/graphics_api.hpp"
+#include "hill/renderer_command.hpp"
 #include "hill/debug.hpp"
 
 namespace hill::renderer {
@@ -12,10 +12,6 @@ namespace hill::renderer {
 
     Renderer::Renderer(imgui::ImGui& imgui, const configuration::Configuration& configuration)
         : m_imgui(&imgui), m_configuration(configuration) {}
-
-    Renderer::~Renderer() {
-
-    }
 
     void Renderer::initialize() {
         if (m_configuration.debug_output && graphics_api::debug_context()) {
@@ -65,75 +61,61 @@ R"(
     }
 )";
 
-        glGenBuffers(1, &m_vertex_buffer);
-        glBindBuffer(GL_ARRAY_BUFFER, m_vertex_buffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        m_vertex_buffer = std::make_shared<vertex_buffer::VertexBuffer>();
+        m_vertex_buffer->bind();
+        m_vertex_buffer->upload_data(vertices, sizeof(vertices));
+        m_vertex_buffer->unbind();
 
-        glGenBuffers(1, &m_index_buffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_index_buffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        m_element_buffer = std::make_shared<element_buffer::ElementBuffer>();
+        m_element_buffer->bind();
+        m_element_buffer->upload_data(indices, sizeof(indices));
+        m_element_buffer->unbind();
 
-        glGenVertexArrays(1, &m_vertex_array);
-        glBindVertexArray(m_vertex_array);
-        glBindBuffer(GL_ARRAY_BUFFER, m_vertex_buffer);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(0));
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_index_buffer);
-        glBindVertexArray(0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        vertex_array::Layout layout;
+        layout.attribute(vertex_array::Attribute(0, 3, vertex_array::Type::Float, false, 6 * sizeof(float), 0));
+        layout.attribute(vertex_array::Attribute(1, 3, vertex_array::Type::Float, false, 6 * sizeof(float), 3 * sizeof(float)));
 
-        unsigned int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex_shader, 1, &vertex_shader_source, nullptr);
-        glCompileShader(vertex_shader);
+        m_vertex_array = std::make_shared<vertex_array::VertexArray>();
+        m_vertex_array->bind();
+        m_vertex_array->configure(m_vertex_buffer, layout);
+        m_vertex_array->configure_and_unbind(m_element_buffer);
 
-        unsigned int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment_shader, 1, &fragment_shader_source, nullptr);
-        glCompileShader(fragment_shader);
+        const auto vertex_shader = std::make_shared<shader::Shader>(shader::ShaderType::Vertex);
+        vertex_shader->compile(vertex_shader_source);
 
-        m_shader_program = glCreateProgram();
-        glAttachShader(m_shader_program, vertex_shader);
-        glAttachShader(m_shader_program, fragment_shader);
-        glLinkProgram(m_shader_program);
+        const auto fragment_shader = std::make_shared<shader::Shader>(shader::ShaderType::Fragment);
+        fragment_shader->compile(fragment_shader_source);
 
-        glDeleteShader(vertex_shader);
-        glDeleteShader(fragment_shader);
+        m_program = std::make_shared<shader::Program>();
+        m_program->attach_shader(vertex_shader);
+        m_program->attach_shader(fragment_shader);
+        m_program->link();
     }
 
     void Renderer::uninitialize() {
-        glDeleteProgram(m_shader_program);
-        glDeleteVertexArrays(1, &m_vertex_array);
-        glDeleteBuffers(1, &m_index_buffer);
-        glDeleteBuffers(1, &m_vertex_buffer);
+        m_program.reset();
+        m_vertex_array.reset();
+        m_element_buffer.reset();
+        m_vertex_buffer.reset();
 
         imgui_uninitialize();
     }
 
     void Renderer::render() {
-        glClearColor(m_background_color[0], m_background_color[1], m_background_color[2], 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        renderer_command::viewport(m_window_width, m_window_height);
 
-        glUseProgram(m_shader_program);
-        glBindVertexArray(m_vertex_array);
-        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
-        glBindVertexArray(0);
-        glUseProgram(0);
+        renderer_command::clear_color(m_background_color[0], m_background_color[1], m_background_color[2], 1.0f);
+        renderer_command::clear(renderer_command::Buffers::C);
 
-        glUseProgram(m_shader_program);
-        glBindVertexArray(m_vertex_array);
-        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, reinterpret_cast<void*>(3 * sizeof(unsigned int)));
-        glBindVertexArray(0);
-        glUseProgram(0);
+        submit(m_program, m_vertex_array, 3, 0);
+        submit(m_program, m_vertex_array, 3, 3);
 
         imgui_render();
     }
 
     void Renderer::window_resize(int width, int height) {
-        glViewport(0, 0, width, height);
+        m_window_width = width;
+        m_window_height = height;
     }
 
     void Renderer::imgui_initialize() const {
@@ -147,7 +129,7 @@ R"(
         ImGui::DestroyContext();
     }
 
-    void Renderer::imgui_render() {
+    void Renderer::imgui_render() const {
         m_imgui->begin();
         ImGui::NewFrame();
 
@@ -156,5 +138,13 @@ R"(
         ImGui::EndFrame();
         ImGui::Render();
         m_imgui->end(ImGui::GetDrawData());
+    }
+
+    void Renderer::submit(std::shared_ptr<shader::Program> program, std::shared_ptr<vertex_array::VertexArray> vertex_array, int count, int offset) {
+        program->use();
+        vertex_array->bind();
+        renderer_command::draw_elements_triangles(count, offset);
+        vertex_array->unbind();
+        program->unuse();
     }
 }

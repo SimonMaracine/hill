@@ -17,6 +17,7 @@ target_sources(
         "src/editor.cpp"
         "src/glad.cpp"
         "src/graphics_api.cpp"
+        "src/mesh.cpp"
         "src/renderer_command.cpp"
         "src/renderer.cpp"
     PUBLIC
@@ -35,6 +36,7 @@ target_sources(
             "include/hill/error.hpp"
             "include/hill/graphics_api.hpp"
             "include/hill/imgui.hpp"
+            "include/hill/mesh.hpp"
             "include/hill/renderer_command.hpp"
             "include/hill/renderer.hpp"
 )

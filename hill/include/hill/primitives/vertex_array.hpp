@@ -17,6 +17,10 @@ namespace hill::vertex_array {
     };
 
     struct Attribute {
+        Attribute() = default;
+        Attribute(unsigned int index, int components, Type type, bool normalized, int stride, unsigned int pointer)
+            : index(index), components(components), type(type), normalized(normalized), stride(stride), pointer(pointer) {}
+
         unsigned int index {};
         int components {};
         Type type {};
