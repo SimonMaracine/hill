@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
+include(cmake/assimp.cmake)
 include(cmake/glad.cmake)
 include(cmake/glm.cmake)
 include(cmake/imgui.cmake)
@@ -50,8 +51,8 @@ target_sources(
             "include/hill/renderer_command.hpp"
 )
 
-target_link_libraries(hill PRIVATE glad)
-target_link_libraries(hill PUBLIC imgui glm::glm stb_image)
+target_link_libraries(hill PRIVATE glad stb_image assimp::assimp)
+target_link_libraries(hill PUBLIC imgui glm::glm)
 
 set_target_cpp_mode(hill)
 set_target_warnings(hill)

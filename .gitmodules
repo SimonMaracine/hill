@@ -8,3 +8,6 @@
 [submodule "hill/extern/glm"]
 	path = hill/extern/glm
 	url = https://github.com/g-truc/glm
+[submodule "hill/extern/assimp"]
+	path = hill/extern/assimp
+	url = https://github.com/assimp/assimp/
