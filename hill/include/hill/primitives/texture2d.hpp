@@ -29,7 +29,7 @@ namespace hill::texture2d {
 
     class Texture2D {
     public:
-        Texture2D();
+        Texture2D(Format format, int width, int height, bool mipmapping = false);
         ~Texture2D();
 
         Texture2D(const Texture2D&) = delete;
@@ -38,12 +38,20 @@ namespace hill::texture2d {
         Texture2D& operator=(Texture2D&&) = delete;
 
         unsigned int id() const { return m_texture; }
+        int width() const { return m_width; }
+        int height() const { return m_height; }
 
         void bind(unsigned int unit) const;
         void unbind(unsigned int unit) const;
         void configure(const Specification& specification = {}) const;
-        void upload_data(Format format, int width, int height, const void* data, bool mipmapping = false) const;
+        void upload_data(const void* data) const;
     private:
+        void allocate_storage() const;
+
         unsigned int m_texture {};
+        Format m_format {};
+        int m_width {};
+        int m_height {};
+        bool m_mipmapping {};
     };
 }

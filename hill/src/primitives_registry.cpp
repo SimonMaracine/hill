@@ -56,4 +56,12 @@ namespace hill::primitives_registry {
     void Registry::remove_program(unsigned int id) {
         m_programs.erase(id);
     }
+
+    void Registry::add_texture2d(unsigned int id) {
+        m_textures2d.insert(id);
+    }
+
+    void Registry::remove_texture2d(unsigned int id) {
+        m_textures2d.erase(id);
+    }
 }

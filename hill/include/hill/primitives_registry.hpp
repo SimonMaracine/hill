@@ -16,6 +16,7 @@ namespace hill::primitives_registry {
         const Container& vertex_arrays() const { return m_vertex_arrays; }
         const Container& shaders() const { return m_shaders; }
         const Container& programs() const { return m_programs; }
+        const Container& textures2d() const { return m_textures2d; }
 
         void add_vertex_buffer(unsigned int id);
         void remove_vertex_buffer(unsigned int id);
@@ -31,11 +32,15 @@ namespace hill::primitives_registry {
 
         void add_program(unsigned int id);
         void remove_program(unsigned int id);
+
+        void add_texture2d(unsigned int id);
+        void remove_texture2d(unsigned int id);
     private:
         Container m_vertex_buffers;
         Container m_element_buffers;
         Container m_vertex_arrays;
         Container m_shaders;
         Container m_programs;
+        Container m_textures2d;
     };
 }

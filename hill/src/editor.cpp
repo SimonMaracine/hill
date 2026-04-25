@@ -74,6 +74,7 @@ namespace hill::editor {
             primitives_object("Vertex Arrays", primitives_registry::Registry::get().vertex_arrays());
             primitives_object("Shaders", primitives_registry::Registry::get().shaders());
             primitives_object("Programs", primitives_registry::Registry::get().programs());
+            primitives_object("Textures 2D", primitives_registry::Registry::get().textures2d());
         }
 
         ImGui::End();

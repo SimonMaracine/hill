@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 include(cmake/glad.cmake)
 include(cmake/glm.cmake)
 include(cmake/imgui.cmake)
+include(cmake/stb_image.cmake)
 
 add_library(hill STATIC)
 
@@ -19,6 +20,7 @@ target_sources(
         "src/editor.cpp"
         "src/glad.cpp"
         "src/graphics_api.cpp"
+        "src/image.cpp"
         "src/mesh.cpp"
         "src/primitives_registry.cpp"
         "src/renderer.cpp"
@@ -40,6 +42,7 @@ target_sources(
             "include/hill/editor.hpp"
             "include/hill/error.hpp"
             "include/hill/graphics_api.hpp"
+            "include/hill/image.hpp"
             "include/hill/imgui.hpp"
             "include/hill/mesh.hpp"
             "include/hill/primitives_registry.hpp"
@@ -48,7 +51,7 @@ target_sources(
 )
 
 target_link_libraries(hill PRIVATE glad)
-target_link_libraries(hill PUBLIC imgui glm::glm)
+target_link_libraries(hill PUBLIC imgui glm::glm stb_image)
 
 set_target_cpp_mode(hill)
 set_target_warnings(hill)
