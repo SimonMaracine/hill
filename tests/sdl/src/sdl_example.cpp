@@ -105,6 +105,7 @@ void SdlExample::end(ImDrawData* draw_data) const {
 
 void SdlExample::update() {
     m_editor.update(m_renderer);
+    m_editor.update_camera(m_renderer);
 }
 
 void SdlExample::run() {

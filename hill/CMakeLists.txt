@@ -32,6 +32,7 @@ target_sources(
             "include/hill/primitives/shader.hpp"
             "include/hill/primitives/vertex_array.hpp"
             "include/hill/primitives/vertex_buffer.hpp"
+            "include/hill/camera.hpp"
             "include/hill/configuration.hpp"
             "include/hill/debug.hpp"
             "include/hill/editor.hpp"

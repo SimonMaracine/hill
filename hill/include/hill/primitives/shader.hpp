@@ -70,7 +70,8 @@ namespace hill::shader {
         void use() const;
         void unuse() const;
 
-        void upload_uniform_vec3(const std::string& name, glm::vec3 value) const;
+        void upload_uniform_float3(const std::string& name, glm::vec3 value) const;
+        void upload_uniform_float16(const std::string& name, const glm::mat4& value) const;
     private:
         bool link_successful() const;
         std::string info_log() const;

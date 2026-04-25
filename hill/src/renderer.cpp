@@ -44,8 +44,10 @@ R"(
 
     out vec3 v_color;
 
+    uniform mat4 u_projection_view;
+
     void main() {
-        gl_Position = vec4(a_position, 1.0);
+        gl_Position = u_projection_view * vec4(a_position, 1.0);
         v_color = a_color;
     }
 )";
@@ -92,6 +94,8 @@ R"(
         m_program->attach_shader(vertex_shader);
         m_program->attach_shader(fragment_shader);
         m_program->link();
+
+        m_last_time = std::chrono::high_resolution_clock::now();
     }
 
     void Renderer::uninitialize() {
@@ -105,10 +109,20 @@ R"(
     }
 
     void Renderer::render() {
+        const auto current_time = std::chrono::high_resolution_clock::now();
+        m_frame_time = current_time - m_last_time;
+        m_last_time = current_time;
+
+        m_editor_camera.projection(m_window_width, m_window_height, 45.0f, 0.01f, 100.0f);
         renderer_command::viewport(m_window_width, m_window_height);
 
         renderer_command::clear_color({ m_background_color[0], m_background_color[1], m_background_color[2], 1.0f });
         renderer_command::clear(renderer_command::Buffers::C);
+
+        m_editor_camera.update_projection_view();
+        m_program->use();  // FIXME hack
+        m_program->upload_uniform_float16("u_projection_view", m_editor_camera.projection_view());
+        m_program->unuse();
 
         submit(m_program, m_vertex_array, 3, 0);
         submit(m_program, m_vertex_array, 3, 3);

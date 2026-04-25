@@ -5,6 +5,7 @@
 #include <utility>
 
 #include <glad/gl.h>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "hill/primitives_registry.hpp"
 
@@ -123,7 +124,7 @@ namespace hill::shader {
         glUseProgram(0);
     }
 
-    void Program::upload_uniform_vec3(const std::string& name, glm::vec3 value) const {
+    void Program::upload_uniform_float3(const std::string& name, glm::vec3 value) const {
         const int location = glGetUniformLocation(m_program, name.c_str());
 
         if (location < 0) {
@@ -131,6 +132,16 @@ namespace hill::shader {
         }
 
         glUniform3f(location, value.x, value.y, value.z);
+    }
+
+    void Program::upload_uniform_float16(const std::string& name, const glm::mat4& value) const {
+        const int location = glGetUniformLocation(m_program, name.c_str());
+
+        if (location < 0) {
+            throw ShaderError(std::format("Could not find uniform: {}", name));
+        }
+
+        glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
     }
 
     bool Program::link_successful() const {

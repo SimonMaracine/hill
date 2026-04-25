@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <chrono>
 
 #include "hill/primitives/shader.hpp"
 #include "hill/primitives/vertex_array.hpp"
@@ -8,6 +9,7 @@
 #include "hill/primitives/element_buffer.hpp"
 #include "hill/configuration.hpp"
 #include "hill/imgui.hpp"
+#include "hill/camera.hpp"
 
 namespace hill::editor {
     class Editor;
@@ -43,7 +45,10 @@ namespace hill::renderer {
 
         float m_background_color[3] { 0.4f, 0.1f, 0.6f };
 
-        double m_render_frame_time {};
+        std::chrono::high_resolution_clock::time_point m_last_time {};
+        std::chrono::duration<double> m_frame_time {};
+
+        camera::Camera m_editor_camera;
 
         friend class editor::Editor;
     };
