@@ -15,10 +15,9 @@ namespace hill::model {
     public:
         explicit Model(const utility::Buffer& buffer);
     private:
-        void process_node(aiNode* node, const aiScene* scene);
-        mesh::Mesh process_mesh(aiMesh* mesh, const aiScene* scene);
+        void process_node(const aiNode* node, const aiScene* scene);
 
-        std::vector<mesh::Mesh> meshes;
+        std::vector<mesh::Mesh> m_meshes;
     };
 
     struct ModelError : error::Error {
