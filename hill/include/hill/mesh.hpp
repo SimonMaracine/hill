@@ -26,7 +26,7 @@ namespace hill::mesh {
         Normal
     };
 
-    struct Texture {
+    struct Texture {  // TODO image
         std::filesystem::path path;
         TextureType type {};
     };

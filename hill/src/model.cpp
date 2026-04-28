@@ -17,10 +17,8 @@ namespace hill::model {
             case aiTextureType_NORMALS:
                 return mesh::TextureType::Normal;
             default:
-                break;
+                std::unreachable();
         }
-
-        std::unreachable();
     }
 
     static std::vector<mesh::Texture> load_material_textures(const aiMaterial* material, aiTextureType texture_type) {
@@ -36,7 +34,6 @@ namespace hill::model {
 
             textures.push_back(std::move(texture));
         }
-
 
         return textures;
     }

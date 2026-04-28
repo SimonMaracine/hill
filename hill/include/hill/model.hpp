@@ -14,6 +14,8 @@ namespace hill::model {
     class Model {
     public:
         explicit Model(const utility::Buffer& buffer);
+
+        const std::vector<mesh::Mesh>& meshes() const { return m_meshes; }
     private:
         void process_node(const aiNode* node, const aiScene* scene);
 

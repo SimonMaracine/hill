@@ -52,6 +52,8 @@ target_sources(
             "include/hill/primitives_registry.hpp"
             "include/hill/renderer.hpp"
             "include/hill/renderer_command.hpp"
+            "include/hill/renderer_common.hpp"
+            "include/hill/scene.hpp"
             "include/hill/utility.hpp"
 )
 
