@@ -3,6 +3,8 @@
 #include <memory>
 #include <chrono>
 #include <vector>
+#include <string>
+#include <unordered_map>
 
 #include "hill/configuration.hpp"
 #include "hill/imgui.hpp"
@@ -36,6 +38,11 @@ namespace hill::renderer {
 
         void draw_object(const renderer_common::Object& object) const;
 
+        void configure(std::shared_ptr<scene::ModelNode> node);
+
+        std::shared_ptr<vertex_array::VertexArray> create_vertex_array(const mesh::Mesh& mesh) const;
+        std::shared_ptr<shader::Program> create_program(const mesh::Mesh& mesh);
+
         imgui::ImGui* m_imgui {};
         configuration::Configuration m_configuration;
 
@@ -52,6 +59,7 @@ namespace hill::renderer {
         camera::Camera m_editor_camera;
 
         std::vector<renderer_common::Object> m_objects;
+        std::unordered_map<std::string, std::weak_ptr<shader::Program>> m_programs;
 
         std::chrono::high_resolution_clock::time_point m_last_time {};
         std::chrono::duration<double> m_frame_time {};

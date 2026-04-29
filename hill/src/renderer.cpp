@@ -1,6 +1,10 @@
 #include "hill/renderer.hpp"
 
+#include <ranges>
+#include <cstring>
+
 #include <imgui.h>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "hill/primitives/vertex_buffer.hpp"
 #include "hill/primitives/element_buffer.hpp"
@@ -24,88 +28,10 @@ namespace hill::renderer {
         imgui_initialize();
         primitives_registry::Registry::initialize();
 
-//         constexpr float vertices[] = {
-//             0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-//             0.0f, 0.75f, 0.0f, 1.0f, 0.0f, 0.0f,
-//             -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-//             0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-//             -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-//             0.0f, -0.75f, 0.0f, 0.0f, 0.0f, 1.0f
-//         };
-//
-//         constexpr unsigned int indices[] = {
-//             0, 1, 2, 3, 4, 5
-//         };
-//
-//         const char* vertex_shader_source =
-// R"(
-//     #version 430 core
-//
-//     layout(location = 0) in vec3 a_position;
-//     layout(location = 1) in vec3 a_color;
-//
-//     out vec3 v_color;
-//
-//     uniform mat4 u_projection_view;
-//
-//     void main() {
-//         gl_Position = u_projection_view * vec4(a_position, 1.0);
-//         v_color = a_color;
-//     }
-// )";
-//
-//         const char* fragment_shader_source =
-// R"(
-//     #version 430 core
-//
-//     in vec3 v_color;
-//
-//     layout(location = 0) out vec4 o_fragment;
-//
-//     void main() {
-//         o_fragment = vec4(v_color, 1.0);
-//     }
-// )";
-
-        // m_vertex_buffer = std::make_shared<vertex_buffer::VertexBuffer>();
-        // m_vertex_buffer->bind();
-        // m_vertex_buffer->upload_data(vertices, sizeof(vertices));
-        // m_vertex_buffer->unbind();
-        //
-        // m_element_buffer = std::make_shared<element_buffer::ElementBuffer>();
-        // m_element_buffer->bind();
-        // m_element_buffer->upload_data(indices, sizeof(indices));
-        // m_element_buffer->unbind();
-        //
-        // vertex_array::Layout layout;
-        // layout.attribute(vertex_array::Attribute(0, 3, vertex_array::Type::Float, false, 6 * sizeof(float), 0));
-        // layout.attribute(vertex_array::Attribute(1, 3, vertex_array::Type::Float, false, 6 * sizeof(float), 3 * sizeof(float)));
-        //
-        // m_vertex_array = std::make_shared<vertex_array::VertexArray>();
-        // m_vertex_array->bind();
-        // m_vertex_array->configure(m_vertex_buffer, layout);
-        // m_vertex_array->configure_and_unbind(m_element_buffer);
-        //
-        // const auto vertex_shader = std::make_shared<shader::Shader>(shader::ShaderType::Vertex);
-        // vertex_shader->compile(vertex_shader_source);
-        //
-        // const auto fragment_shader = std::make_shared<shader::Shader>(shader::ShaderType::Fragment);
-        // fragment_shader->compile(fragment_shader_source);
-        //
-        // m_program = std::make_shared<shader::Program>();
-        // m_program->attach_shader(vertex_shader);
-        // m_program->attach_shader(fragment_shader);
-        // m_program->link();
-
         m_last_time = std::chrono::high_resolution_clock::now();
     }
 
     void Renderer::uninitialize() {
-        // m_program.reset();
-        // m_vertex_array.reset();
-        // m_element_buffer.reset();
-        // m_vertex_buffer.reset();
-
         primitives_registry::Registry::uninitialize();
         imgui_uninitialize();
     }
@@ -122,12 +48,18 @@ namespace hill::renderer {
         renderer_command::clear(renderer_command::Buffers::C);
 
         m_editor_camera.update_projection_view();
-        // m_program->use();  // FIXME hack
-        // m_program->upload_uniform_float16("u_projection_view", m_editor_camera.projection_view());
-        // m_program->unuse();
-        //
-        // submit(m_program, { 3, 0, m_vertex_array });
-        // submit(m_program, { 3, 3, m_vertex_array });
+
+        for (const auto& wprogram : m_programs | std::views::values) {
+            if (const auto program = wprogram.lock(); program) {
+                program->use();
+                program->upload_uniform_float16("u_projection_view", m_editor_camera.projection_view());
+                program->unuse();
+            }
+        }
+
+        begin();
+        // submit();
+        end();
 
         imgui_render();
     }
@@ -161,7 +93,8 @@ namespace hill::renderer {
 
     void Renderer::submit(std::shared_ptr<scene::ModelNode> node) {
         if (!node->m_configured) {
-            // TODO
+            configure(node);
+            node->m_configured = true;
         }
 
         m_objects.append_range(node->m_objects);
@@ -185,5 +118,97 @@ namespace hill::renderer {
         renderer_command::draw_elements_triangles(object.elements_count, object.elements_offset);
         object.vertex_array->unbind();
         object.program->unuse();
+    }
+
+    void Renderer::configure(std::shared_ptr<scene::ModelNode> node) {
+        for (const mesh::Mesh& mesh : node->m_model.meshes()) {
+            renderer_common::Object& object = node->m_objects.emplace_back();
+            object.elements_count = int(mesh.indices.size());
+            object.vertex_array = create_vertex_array(mesh);
+            object.program = create_program(mesh);
+        }
+    }
+
+    std::shared_ptr<vertex_array::VertexArray> Renderer::create_vertex_array(const mesh::Mesh& mesh) const {
+        const auto vertices_size = mesh.vertices.size() * sizeof(glm::vec3);  // TODO
+        const auto vertices = std::make_unique<unsigned char[]>(vertices_size);
+
+        for (std::size_t i {}; const mesh::Vertex& vertex : mesh.vertices) {
+            std::memcpy(vertices.get() + i, glm::value_ptr(vertex.position), sizeof(vertex.position));
+            i += sizeof(vertex.position);
+        }
+
+        const auto vertex_buffer = std::make_shared<vertex_buffer::VertexBuffer>();
+        vertex_buffer->bind();
+        vertex_buffer->upload_data(vertices.get(), vertices_size);
+        vertex_buffer->unbind();
+
+        const auto element_buffer = std::make_shared<element_buffer::ElementBuffer>();
+        element_buffer->bind();
+        element_buffer->upload_data(mesh.indices.data(), mesh.indices.size() * sizeof(unsigned int));
+        element_buffer->unbind();
+
+        vertex_array::Layout layout;
+        layout.attribute(vertex_array::Attribute(0, 3, vertex_array::Type::Float, false, sizeof(glm::vec3), 0));  // TODO
+
+        const auto vertex_array = std::make_shared<vertex_array::VertexArray>();
+        vertex_array->bind();
+        vertex_array->configure(vertex_buffer, layout);
+        vertex_array->configure_and_unbind(element_buffer);
+
+        return vertex_array;
+    }
+
+    std::shared_ptr<shader::Program> Renderer::create_program(const mesh::Mesh& mesh) {
+        if (const auto iter = m_programs.find("basic"); iter != m_programs.end()) {  // TODO
+            if (const auto program = iter->second.lock(); program) {
+                return program;
+            }
+        }
+
+        constexpr const char* vertex_shader_source =  // TODO
+R"(
+    #version 430 core
+
+    layout(location = 0) in vec3 a_position;
+    layout(location = 1) in vec3 a_color;
+
+    out vec3 v_color;
+
+    uniform mat4 u_projection_view;
+
+    void main() {
+        gl_Position = u_projection_view * vec4(a_position, 1.0);
+        v_color = a_color;
+    }
+)";
+
+        constexpr const char* fragment_shader_source =
+R"(
+    #version 430 core
+
+    in vec3 v_color;
+
+    layout(location = 0) out vec4 o_fragment;
+
+    void main() {
+        o_fragment = vec4(v_color, 1.0);
+    }
+)";
+
+        const auto vertex_shader = std::make_shared<shader::Shader>(shader::ShaderType::Vertex);
+        vertex_shader->compile(vertex_shader_source);
+
+        const auto fragment_shader = std::make_shared<shader::Shader>(shader::ShaderType::Fragment);
+        fragment_shader->compile(fragment_shader_source);
+
+        const auto program = std::make_shared<shader::Program>();
+        program->attach_shader(vertex_shader);
+        program->attach_shader(fragment_shader);
+        program->link();
+
+        m_programs["basic"] = program;
+
+        return program;
     }
 }
