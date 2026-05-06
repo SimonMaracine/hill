@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 #include <filesystem>
 
@@ -36,13 +37,15 @@ namespace hill::mesh {
         glm::vec3 color_ambient {0.6f};
         glm::vec3 color_diffuse {0.6f};
         glm::vec3 color_specular {0.6f};
+        float shininess = 32.0f;
     };
 
     struct Mesh {
-        unsigned int vertex_attributes {};
+        std::string name;
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
         std::vector<Texture> textures;
+        unsigned int vertex_attributes {};
         unsigned int material_index {};
     };
 }

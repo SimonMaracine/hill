@@ -21,6 +21,29 @@ namespace hill::model {
         }
     }
 
+    static constexpr glm::mat4 transformation(const aiMatrix4x4& matrix) {
+        glm::mat4 result_matrix;
+
+        result_matrix[0][0] = matrix.a1;
+        result_matrix[0][1] = matrix.a2;
+        result_matrix[0][2] = matrix.a3;
+        result_matrix[0][3] = matrix.a4;
+        result_matrix[1][0] = matrix.b1;
+        result_matrix[1][1] = matrix.b2;
+        result_matrix[1][2] = matrix.b3;
+        result_matrix[1][3] = matrix.b4;
+        result_matrix[2][0] = matrix.c1;
+        result_matrix[2][1] = matrix.c2;
+        result_matrix[2][2] = matrix.c3;
+        result_matrix[2][3] = matrix.c4;
+        result_matrix[3][0] = matrix.d1;
+        result_matrix[3][1] = matrix.d2;
+        result_matrix[3][2] = matrix.d3;
+        result_matrix[3][3] = matrix.d4;
+
+        return glm::transpose(result_matrix);
+    }
+
     static std::vector<mesh::Texture> load_material_textures(const aiMaterial* material, aiTextureType texture_type) {
         std::vector<mesh::Texture> textures;
 
@@ -42,16 +65,20 @@ namespace hill::model {
         mesh::Material result_material;
         result_material.name = material->GetName().C_Str();
 
-        if (aiColor4D color; aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &color) == aiReturn_SUCCESS) {
-            result_material.color_ambient = glm::vec3(color.r, color.g, color.b);
+        if (aiColor4D value; aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &value) == aiReturn_SUCCESS) {
+            result_material.color_ambient = glm::vec3(value.r, value.g, value.b);
         }
 
-        if (aiColor4D color; aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &color) == aiReturn_SUCCESS) {
-            result_material.color_diffuse = glm::vec3(color.r, color.g, color.b);
+        if (aiColor4D value; aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &value) == aiReturn_SUCCESS) {
+            result_material.color_diffuse = glm::vec3(value.r, value.g, value.b);
         }
 
-        if (aiColor4D color; aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &color) == aiReturn_SUCCESS) {
-            result_material.color_specular = glm::vec3(color.r, color.g, color.b);
+        if (aiColor4D value; aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &value) == aiReturn_SUCCESS) {
+            result_material.color_specular = glm::vec3(value.r, value.g, value.b);
+        }
+
+        if (float value; aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &value) == aiReturn_SUCCESS) {
+            result_material.shininess = value;
         }
 
         return result_material;
@@ -73,7 +100,11 @@ namespace hill::model {
             throw ModelError("Model is incomplete");
         }
 
-        process_node(scene->mRootNode, scene);
+        TraversalCtx ctx;
+
+        m_root = std::make_shared<Node>();
+        ctx.current_node = m_root;
+        process_node(scene->mRootNode, scene, ctx);
     }
 
     Model::Model(const utility::FilePath& file_path) {
@@ -92,22 +123,43 @@ namespace hill::model {
             throw ModelError("Model is incomplete");
         }
 
-        process_node(scene->mRootNode, scene);
+        TraversalCtx ctx;
+
+        m_root = std::make_shared<Node>();
+        ctx.current_node = m_root;
+        process_node(scene->mRootNode, scene, ctx);
     }
 
-    void Model::process_node(const aiNode* node, const aiScene* scene) {
+    void Model::process_node(const aiNode* node, const aiScene* scene, TraversalCtx& ctx) {
+        ctx.current_node.lock()->parent = std::exchange(ctx.parent_node, ctx.current_node.lock());
+
+        const auto current_node = ctx.current_node.lock();
+
+        current_node->name = node->mName.C_Str();
+        current_node->transform = transformation(node->mTransformation);
+
         for (unsigned int i {}; i < node->mNumMeshes; i++) {
             const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            m_meshes.push_back(process_mesh(mesh, scene));
+
+            if (const auto iter = ctx.processed_meshes.find(mesh); iter != ctx.processed_meshes.end()) {
+                 current_node->meshes.push_back(iter->second);
+                continue;
+            }
+
+            current_node->meshes.push_back(std::make_shared<mesh::Mesh>(process_mesh(mesh, scene)));
         }
 
         for (unsigned int i {}; i < node->mNumChildren; i++) {
-            process_node(node->mChildren[i], scene);
+            current_node->children.push_back(std::make_shared<Node>());
+            ctx.current_node = current_node->children.back();
+            process_node(node->mChildren[i], scene, ctx);
         }
     }
 
     mesh::Mesh Model::process_mesh(const aiMesh* mesh, const aiScene* scene) {
         mesh::Mesh result_mesh;
+
+        result_mesh.name = mesh->mName.C_Str();
 
         if (!mesh->HasPositions()) {
             throw ModelError("Mesh doesn't have positions");

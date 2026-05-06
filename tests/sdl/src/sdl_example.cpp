@@ -118,6 +118,11 @@ void SdlExample::run() {
     m_renderer.initialize();
     m_editor.initialize();
 
+    {
+        hill::model::Model model {hill::utility::FilePath("assets/cube/cube.glb")};
+        throw hill::error::Error("Quit");
+    }
+
     hill::utility::Buffer buffer;
     hill::utility::read_file("assets/teapot.obj", buffer);
 

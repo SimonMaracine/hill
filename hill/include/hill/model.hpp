@@ -1,7 +1,12 @@
 #pragma once
 
+#include <string>
 #include <vector>
 #include <unordered_map>
+#include <memory>
+
+#include <glm/glm.hpp>
+#include "glm/ext/matrix_transform.hpp"
 
 #include "hill/mesh.hpp"
 #include "hill/utility.hpp"
@@ -11,19 +16,34 @@ struct aiScene;
 struct aiNode;
 struct aiMesh;
 
-namespace hill::model {
+namespace hill::model {  // FIXME load Assimp's structure perfectly; load meshes as shared pointer; the scene hierarchy's model nodes then will have a list of mesh instances
+    struct Node {
+        std::weak_ptr<Node> parent;
+        std::vector<std::shared_ptr<Node>> children;
+
+        std::string name;
+        std::vector<std::shared_ptr<mesh::Mesh>> meshes;
+        glm::mat4 transform = glm::identity<glm::mat4>();
+    };
+
+    struct TraversalCtx {
+        std::weak_ptr<Node> current_node;  // Used for propagation
+        std::weak_ptr<Node> parent_node;
+        std::unordered_map<const aiMesh*, std::shared_ptr<mesh::Mesh>> processed_meshes;
+    };
+
     class Model {
     public:
         explicit Model(const utility::Buffer& buffer);
         explicit Model(const utility::FilePath& file_path);
 
-        const std::vector<mesh::Mesh>& meshes() const { return m_meshes; }
+        const Node* root() const { return m_root.get(); }
         const std::unordered_map<unsigned int, mesh::Material>& materials() const { return m_materials; }
     private:
-        void process_node(const aiNode* node, const aiScene* scene);
+        void process_node(const aiNode* node, const aiScene* scene, TraversalCtx& ctx);
         mesh::Mesh process_mesh(const aiMesh* mesh, const aiScene* scene);
 
-        std::vector<mesh::Mesh> m_meshes;
+        std::shared_ptr<Node> m_root;
         std::unordered_map<unsigned int, mesh::Material> m_materials;
     };
 
