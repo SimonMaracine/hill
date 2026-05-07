@@ -120,10 +120,10 @@ namespace hill::renderer {
         m_objects.clear();
     }
 
-    void Renderer::render_traverse_tree(TraversalCtx& ctx, scene::Node* tree) {
-        tree->renderer_process(*this, ctx);
+    void Renderer::render_traverse_tree(TraversalCtx& ctx, scene::Node* node) {
+        node->renderer_process(*this, ctx);
 
-        for (const auto& child : tree->m_children | std::views::values) {
+        for (const auto& child : node->m_children | std::views::values) {
             TraversalCtx new_ctx = ctx;
             child->renderer_process(*this, new_ctx);
             render_traverse_tree(new_ctx, child.get());
@@ -132,10 +132,6 @@ namespace hill::renderer {
 
     void Renderer::render_node(TraversalCtx& ctx, scene::RootNode* node) {
 
-    }
-
-    void Renderer::render_node(TraversalCtx& ctx, scene::MeshNode* node) {
-        submit(RenderObject { node->m_object, ctx.transform });
     }
 
     void Renderer::render_node(TraversalCtx& ctx, scene::ModelNode* node) {
@@ -151,6 +147,10 @@ namespace hill::renderer {
         transform = glm::scale(transform, node->scale);
 
         ctx.transform = transform;
+
+        for (const renderer_common::Object& object : node->m_objects) {
+            submit(RenderObject { object, ctx.transform });
+        }
     }
 
     void Renderer::render_node(TraversalCtx& ctx, scene::DirectionalLightNode* node) {
@@ -171,20 +171,12 @@ namespace hill::renderer {
     }
 
     void Renderer::configure(scene::ModelNode* node) {
-        if (node->m_model->meshes().size() != node->m_children.size()) {
-            throw error::Error("Invalid model node children");
-        }
+        assert(node->m_meshes.size() != node->m_objects.size());
 
-        for (const auto& [mesh, child] : std::views::zip(node->m_model->meshes(), node->m_children | std::views::values)) {
-            std::shared_ptr<scene::MeshNode> mesh_node = std::dynamic_pointer_cast<scene::MeshNode>(child);
-
-            if (!mesh_node) {
-                throw error::Error("Invalid model node child");
-            }
-
-            mesh_node->m_object.elements_count = int(mesh.indices.size());
-            mesh_node->m_object.vertex_array = create_vertex_array(mesh);
-            mesh_node->m_object.material = create_material(mesh, *node->m_model);
+        for (const auto& [mesh, object] : std::views::zip(node->m_meshes, node->m_objects)) {
+            object.elements_count = int(mesh->indices.size());
+            object.vertex_array = create_vertex_array(*mesh);
+            object.material = create_material(*mesh, *node->m_model);
         }
     }
 

@@ -126,10 +126,10 @@ void SdlExample::run() {
     hill::utility::Buffer buffer;
     hill::utility::read_file("assets/teapot.obj", buffer);
 
-    auto teapot = std::make_shared<hill::scene::ModelNode>("teapot", std::make_shared<hill::model::Model>(buffer));
+    auto teapot = hill::scene::ModelNode::from_model("teapot", hill::model::Model(buffer));
     m_renderer.root_node()->add(teapot);
 
-    auto heart = std::make_shared<hill::scene::ModelNode>("heart", std::make_shared<hill::model::Model>(hill::utility::FilePath("assets/heart/heart.obj")));
+    auto heart = hill::scene::ModelNode::from_model("heart", hill::model::Model(hill::utility::FilePath("assets/heart/heart.obj")));
     heart->position = glm::vec3(5.0f, 0.0f, 0.0f);
     heart->scale = glm::vec3(0.4f, 0.4f, 0.4f);
     m_renderer.root_node()->add(heart);

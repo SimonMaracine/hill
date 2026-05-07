@@ -17,20 +17,17 @@ namespace hill::scene {
         editor.node_properties(this);
     }
 
-    void MeshNode::renderer_process(renderer::Renderer& renderer, renderer::TraversalCtx& ctx) {
-        renderer.render_node(ctx, this);
-    }
-
-    void MeshNode::editor_process(editor::Editor& editor) {
-        editor.node_properties(this);
-    }
-
     void ModelNode::renderer_process(renderer::Renderer& renderer, renderer::TraversalCtx& ctx) {
         renderer.render_node(ctx, this);
     }
 
     void ModelNode::editor_process(editor::Editor& editor) {
         editor.node_properties(this);
+    }
+
+    std::shared_ptr<ModelNode> ModelNode::create(std::string name, std::shared_ptr<model::Model> model) {
+        // TODO
+        return std::make_shared<ModelNode>(std::move(name));
     }
 
     void DirectionalLightNode::renderer_process(renderer::Renderer& renderer, renderer::TraversalCtx& ctx) {

@@ -115,28 +115,28 @@ namespace hill::editor {
         ImGui::End();
     }
 
-    void Editor::scene_hierarchy_tree(scene::Node* tree, std::string path) {
+    void Editor::scene_hierarchy_tree(scene::Node* node, std::string path) {
         using namespace std::string_literals;
 
-        path += tree->name().data() + "/"s;
+        path += node->name().data() + "/"s;
 
         static constexpr auto flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-        const bool selected = m_wselected_node.lock() == tree->shared_from_this();
+        const bool selected = m_wselected_node.lock() == node->shared_from_this();
 
         const bool result = ImGui::TreeNodeEx(
             path.c_str(),
             flags | (selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None),
             "%s",
-            tree->name().empty() ? "/" : tree->name().data()
+            node->name().empty() ? "/" : node->name().data()
         );
 
         if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
-            m_wselected_node = tree->weak_from_this();
+            m_wselected_node = node->weak_from_this();
         }
 
         if (result) {
-            for (const auto& node : tree->m_children | std::views::values) {
-                scene_hierarchy_tree(node.get(), path);
+            for (const auto& child : node->m_children | std::views::values) {
+                scene_hierarchy_tree(child.get(), path);
             }
 
             ImGui::TreePop();

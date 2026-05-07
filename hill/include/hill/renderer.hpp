@@ -52,9 +52,8 @@ namespace hill::renderer {
 
         void render_begin();
         void render_end();
-        void render_traverse_tree(TraversalCtx& ctx, scene::Node* tree);
+        void render_traverse_tree(TraversalCtx& ctx, scene::Node* node);
         void render_node(TraversalCtx& ctx, scene::RootNode* node);
-        void render_node(TraversalCtx& ctx, scene::MeshNode* node);
         void render_node(TraversalCtx& ctx, scene::ModelNode* node);
         void render_node(TraversalCtx& ctx, scene::DirectionalLightNode* node);
 
@@ -89,7 +88,6 @@ namespace hill::renderer {
 
         friend class editor::Editor;
         friend class scene::RootNode;
-        friend class scene::MeshNode;
         friend class scene::ModelNode;
         friend class scene::DirectionalLightNode;
     };

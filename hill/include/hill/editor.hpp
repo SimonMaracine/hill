@@ -14,7 +14,6 @@ namespace hill::renderer {
 namespace hill::scene {
     class Node;
     class RootNode;
-    class MeshNode;
     class ModelNode;
     class DirectionalLightNode;
 }
@@ -32,11 +31,10 @@ namespace hill::editor {
         void primitives_object(const char* label, const auto& objects);
 
         void scene_hierarchy(renderer::Renderer& renderer);
-        void scene_hierarchy_tree(scene::Node* tree, std::string path);
+        void scene_hierarchy_tree(scene::Node* node, std::string path);
 
         void node_properties(renderer::Renderer& renderer);
         void node_properties(scene::RootNode* node);
-        void node_properties(scene::MeshNode* node);
         void node_properties(scene::ModelNode* node);
         void node_properties(scene::DirectionalLightNode* node);
 
@@ -55,7 +53,6 @@ namespace hill::editor {
         std::weak_ptr<scene::Node> m_wselected_node;
 
         friend class scene::RootNode;
-        friend class scene::MeshNode;
         friend class scene::ModelNode;
         friend class scene::DirectionalLightNode;
     };
