@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include "material.hpp"
+#include "editor_common.hpp"
 
 namespace hill::renderer {
     class Renderer;
@@ -19,9 +20,17 @@ namespace hill::scene {
 }
 
 namespace hill::editor {
+    struct ModelMesh : editor_common::Inspectable {
+        void editor_inspect(Editor& editor) override;
+
+        std::shared_ptr<scene::ModelNode> node;
+        std::size_t index {};
+    };
+
     class Editor {
     public:
         void initialize();
+        void uninitialize();
         void update(renderer::Renderer& renderer);
         void update_camera(renderer::Renderer& renderer);
     private:
@@ -33,10 +42,13 @@ namespace hill::editor {
         void scene_hierarchy(renderer::Renderer& renderer);
         void scene_hierarchy_tree(scene::Node* node, std::string path);
 
-        void node_properties(renderer::Renderer& renderer);
-        void node_properties(scene::RootNode* node);
-        void node_properties(scene::ModelNode* node);
-        void node_properties(scene::DirectionalLightNode* node);
+        void inspector(renderer::Renderer& renderer);
+        void inspect(scene::RootNode* node);
+        void inspect(scene::ModelNode* node);
+        void inspect(scene::DirectionalLightNode* node);
+        void inspect(ModelMesh* mesh);
+
+        void nodes(scene::ModelNode* node);
 
         bool material_basic(material::MaterialBasic* material);
 
@@ -50,10 +62,11 @@ namespace hill::editor {
             float move_speed_multiplier = 1.0f;
         } m_camera;
 
-        std::weak_ptr<scene::Node> m_wselected_node;
+        std::shared_ptr<editor_common::Inspectable> m_inspectable;
 
         friend class scene::RootNode;
         friend class scene::ModelNode;
         friend class scene::DirectionalLightNode;
+        friend struct ModelMesh;
     };
 }

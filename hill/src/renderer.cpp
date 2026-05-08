@@ -125,7 +125,6 @@ namespace hill::renderer {
 
         for (const auto& child : node->m_children | std::views::values) {
             TraversalCtx new_ctx = ctx;
-            child->renderer_process(*this, new_ctx);
             render_traverse_tree(new_ctx, child.get());
         }
     }
@@ -146,7 +145,7 @@ namespace hill::renderer {
         transform = glm::rotate(transform, glm::radians(node->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
         transform = glm::scale(transform, node->scale);
 
-        ctx.transform = transform;
+        ctx.transform *= node->m_transform * transform;
 
         for (const renderer_common::Object& object : node->m_objects) {
             submit(RenderObject { object, ctx.transform });
@@ -171,7 +170,7 @@ namespace hill::renderer {
     }
 
     void Renderer::configure(scene::ModelNode* node) {
-        assert(node->m_meshes.size() != node->m_objects.size());
+        assert(node->m_meshes.size() == node->m_objects.size());
 
         for (const auto& [mesh, object] : std::views::zip(node->m_meshes, node->m_objects)) {
             object.elements_count = int(mesh->indices.size());

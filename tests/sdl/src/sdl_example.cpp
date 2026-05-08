@@ -118,21 +118,19 @@ void SdlExample::run() {
     m_renderer.initialize();
     m_editor.initialize();
 
-    {
-        hill::model::Model model {hill::utility::FilePath("assets/cube/cube.glb")};
-        throw hill::error::Error("Quit");
-    }
-
     hill::utility::Buffer buffer;
     hill::utility::read_file("assets/teapot.obj", buffer);
 
-    auto teapot = hill::scene::ModelNode::from_model("teapot", hill::model::Model(buffer));
-    m_renderer.root_node()->add(teapot);
-
-    auto heart = hill::scene::ModelNode::from_model("heart", hill::model::Model(hill::utility::FilePath("assets/heart/heart.obj")));
-    heart->position = glm::vec3(5.0f, 0.0f, 0.0f);
-    heart->scale = glm::vec3(0.4f, 0.4f, 0.4f);
-    m_renderer.root_node()->add(heart);
+    // auto teapot = hill::scene::ModelNode::from_model("teapot", std::make_shared<hill::model::Model>(buffer));
+    // m_renderer.root_node()->add(teapot);
+    //
+    // auto heart = hill::scene::ModelNode::from_model("heart", std::make_shared<hill::model::Model>(hill::utility::FilePath("assets/heart/heart.obj")));
+    // heart->position = glm::vec3(5.0f, 0.0f, 0.0f);
+    // heart->scale = glm::vec3(0.4f, 0.4f, 0.4f);
+    // m_renderer.root_node()->add(heart);
+    //
+    auto cube = hill::scene::ModelNode::from_model(std::make_shared<hill::model::Model>(hill::utility::FilePath("assets/cube/cube.glb")));
+    m_renderer.root_node()->add(cube);
 
     auto light = std::make_shared<hill::scene::DirectionalLightNode>("light");
     light->directional_light.direction = glm::normalize(glm::vec3(0.1f, -1.0f, 0.4f));
@@ -164,8 +162,10 @@ void SdlExample::run() {
         }
     }
 
-    teapot.reset();
-    heart.reset();
+    // teapot.reset();
+    // heart.reset();
+    cube.reset();
 
+    m_editor.uninitialize();
     m_renderer.uninitialize();
 }

@@ -16,7 +16,7 @@ struct aiScene;
 struct aiNode;
 struct aiMesh;
 
-namespace hill::model {  // FIXME load Assimp's structure perfectly; load meshes as shared pointer; the scene hierarchy's model nodes then will have a list of mesh instances
+namespace hill::model {
     struct Node {
         std::weak_ptr<Node> parent;
         std::vector<std::shared_ptr<Node>> children;

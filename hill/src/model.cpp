@@ -142,7 +142,7 @@ namespace hill::model {
             const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
             if (const auto iter = ctx.processed_meshes.find(mesh); iter != ctx.processed_meshes.end()) {
-                 current_node->meshes.push_back(iter->second);
+                current_node->meshes.push_back(iter->second);
                 continue;
             }
 

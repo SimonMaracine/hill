@@ -44,6 +44,7 @@ target_sources(
             "include/hill/configuration.hpp"
             "include/hill/debug.hpp"
             "include/hill/editor.hpp"
+            "include/hill/editor_common.hpp"
             "include/hill/error.hpp"
             "include/hill/graphics_api.hpp"
             "include/hill/image.hpp"

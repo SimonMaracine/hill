@@ -3,16 +3,24 @@
 #include <ranges>
 
 #include <imgui.h>
+#include <glm/gtc/type_ptr.hpp>
 
-#include "glm/gtc/type_ptr.inl"
 #include "hill/renderer.hpp"
 #include "hill/primitives_registry.hpp"
 #include "hill/scene.hpp"
 
 namespace hill::editor {
+    void ModelMesh::editor_inspect(Editor& editor) {
+        editor.inspect(this);
+    }
+
     void Editor::initialize() {
         auto& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    }
+
+    void Editor::uninitialize() {
+        m_inspectable.reset();
     }
 
     void Editor::update(renderer::Renderer& renderer) {
@@ -27,7 +35,7 @@ namespace hill::editor {
         performance(renderer);
         primitives_registry(renderer);
         scene_hierarchy(renderer);
-        node_properties(renderer);
+        inspector(renderer);
     }
 
     void Editor::update_camera(renderer::Renderer& renderer) {
@@ -120,10 +128,10 @@ namespace hill::editor {
 
         path += node->name().data() + "/"s;
 
-        static constexpr auto flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-        const bool selected = m_wselected_node.lock() == node->shared_from_this();
+        static constexpr auto flags = ImGuiTreeNodeFlags_DrawLinesFull | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+        const bool selected = m_inspectable == node->shared_from_this();
 
-        const bool result = ImGui::TreeNodeEx(
+        const bool open = ImGui::TreeNodeEx(
             path.c_str(),
             flags | (selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None),
             "%s",
@@ -131,50 +139,76 @@ namespace hill::editor {
         );
 
         if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
-            m_wselected_node = node->weak_from_this();
+            m_inspectable = node->shared_from_this();
         }
 
-        if (result) {
+        if (open) {
             for (const auto& child : node->m_children | std::views::values) {
                 scene_hierarchy_tree(child.get(), path);
             }
+
+            node->editor_nodes(*this);
 
             ImGui::TreePop();
         }
     }
 
-    void Editor::node_properties(renderer::Renderer& renderer) {
-        if (ImGui::Begin("Node Properties")) {
-            if (const auto selected_node = m_wselected_node.lock(); selected_node) {
-                selected_node->editor_process(*this);
+    void Editor::inspector(renderer::Renderer& renderer) {
+        if (ImGui::Begin("Inspector")) {
+            if (m_inspectable) {
+                m_inspectable->editor_inspect(*this);
             }
         }
 
         ImGui::End();
     }
 
-    void Editor::node_properties(scene::RootNode* node) {
+    void Editor::inspect(scene::RootNode* node) {
         ImGui::SeparatorText("Root");
     }
 
-    void Editor::node_properties(scene::MeshNode* node) {
-        ImGui::SeparatorText("Mesh");
-        material_basic(dynamic_cast<material::MaterialBasic*>(node->m_object.material.get()));
-    }
-
-    void Editor::node_properties(scene::ModelNode* node) {
+    void Editor::inspect(scene::ModelNode* node) {
         ImGui::SeparatorText("Model");
         ImGui::DragFloat3("Position", glm::value_ptr(node->position), 0.1f);
         ImGui::DragFloat3("Rotation", glm::value_ptr(node->rotation), 1.0f, 0.0f, 360.0f);
         ImGui::DragFloat3("Scale", glm::value_ptr(node->scale), 0.01f, 0.0f, 100.0f);
     }
 
-    void Editor::node_properties(scene::DirectionalLightNode* node) {
+    void Editor::inspect(scene::DirectionalLightNode* node) {
         ImGui::SeparatorText("Directional Light");
         ImGui::DragFloat3("Direction", glm::value_ptr(node->directional_light.direction), 0.1f);
         ImGui::DragFloat3("Ambient", glm::value_ptr(node->directional_light.ambient_color), 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat3("Diffuse", glm::value_ptr(node->directional_light.diffuse_color), 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat3("Specular", glm::value_ptr(node->directional_light.specular_color), 0.01f, 0.0f, 1.0f);
+    }
+
+    void Editor::inspect(ModelMesh* mesh) {
+        ImGui::SeparatorText("Mesh");
+        material_basic(dynamic_cast<material::MaterialBasic*>(mesh->node->m_objects.at(mesh->index).material.get()));
+    }
+
+    void Editor::nodes(scene::ModelNode* node) {
+        for (std::size_t i {}; const auto& mesh : node->m_meshes) {
+            static constexpr auto flags = ImGuiTreeNodeFlags_DrawLinesFull | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Leaf;
+            // const bool selected = m_inspectable == node->shared_from_this();
+
+            const bool open = ImGui::TreeNodeEx(
+                mesh->name.c_str(),
+                flags /*| (selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None)*/
+            );
+
+            if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+                ModelMesh model_mesh;
+                model_mesh.node = std::static_pointer_cast<scene::ModelNode>(node->shared_from_this());
+                model_mesh.index = i++;
+
+                m_inspectable = std::make_shared<ModelMesh>(model_mesh);
+            }
+
+            if (open) {
+                ImGui::TreePop();
+            }
+        }
     }
 
     bool Editor::material_basic(material::MaterialBasic* material) {
