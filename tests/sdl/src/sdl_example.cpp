@@ -129,7 +129,7 @@ void SdlExample::run() {
     // heart->scale = glm::vec3(0.4f, 0.4f, 0.4f);
     // m_renderer.root_node()->add(heart);
     //
-    auto cube = hill::scene::ModelNode::from_model(std::make_shared<hill::model::Model>(hill::utility::FilePath("assets/cube/cube.glb")));
+    auto cube = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/cube/cube.glb")));
     m_renderer.root_node()->add(cube);
 
     auto light = std::make_shared<hill::scene::DirectionalLightNode>("light");

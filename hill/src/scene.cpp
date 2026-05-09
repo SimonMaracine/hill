@@ -29,37 +29,66 @@ namespace hill::scene {
         editor.nodes(this);
     }
 
-    std::shared_ptr<ModelNode> ModelNode::from_model(std::shared_ptr<model::Model> model) {
+    std::shared_ptr<ModelNode> ModelNode::from_model(const model::Model& model) {
         TraversalCtx ctx;
-        ctx.model = model;
 
         const auto result_node = std::make_shared<ModelNode>("");
         ctx.current_node = result_node;
-        traverse(ctx, model->root());
+        traverse(ctx, model.root());
 
         return result_node;
     }
 
-    void ModelNode::traverse(TraversalCtx& ctx, const model::Node* model_node) {
+    void ModelNode::traverse(TraversalCtx& ctx, const model::Node* node) {
         const auto current_node = ctx.current_node.lock();
 
-        if (model_node->name.empty()) {
+        if (node->name.empty()) {
             throw error::Error("Invalid name");
         }
 
-        current_node->m_name = model_node->name;
-        current_node->m_transform = model_node->transform;
-        current_node->m_model = ctx.model;
-        current_node->m_meshes.append_range(model_node->meshes);
-        current_node->m_objects.resize(current_node->m_meshes.size());
+        current_node->m_name = node->name;
+        current_node->meshes = create_meshes(node->meshes);
+        current_node->m_static.transform = node->transform;
+        current_node->m_static.meshes.append_range(node->meshes);
 
-        for (const auto& child : model_node->children) {
+        for (const auto& child : node->children) {
             const auto child_node = std::make_shared<ModelNode>("");
             ctx.current_node = child_node;
             traverse(ctx, child.get());
 
             current_node->add(child_node);
         }
+    }
+
+    std::unique_ptr<renderer_common::Mesh[]> ModelNode::create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes) {
+        auto result_meshes = std::make_unique<renderer_common::Mesh[]>(meshes.size());
+
+        for (std::size_t i {}; const auto& mesh : meshes) {
+            auto& [name, material] = result_meshes[i++];
+            name = mesh->name;
+            material = create_material(*mesh);
+        }
+
+        return result_meshes;
+    }
+
+    std::shared_ptr<material::Material> ModelNode::create_material(const mesh::Mesh& mesh) {
+        std::shared_ptr<material::Material> result_material;
+
+        // if (const auto iter = m_programs.find(shader_set); iter != m_programs.end()) {
+        //     if (const auto program = iter->second.lock(); program) {
+        switch (renderer_common::choose_shader_set(mesh)) {
+            case renderer_common::ShaderSet::Basic: {
+                auto material = std::make_shared<material::MaterialBasic>();
+                material->ambient_color = mesh.material.color_ambient;
+                material->diffuse_color = mesh.material.color_diffuse;
+                material->specular_color = mesh.material.color_specular;
+
+                result_material = std::move(material);
+            }
+        }
+
+        return result_material;
     }
 
     void DirectionalLightNode::renderer_process(renderer::Renderer& renderer, renderer::TraversalCtx& ctx) {

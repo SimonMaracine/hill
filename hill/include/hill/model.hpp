@@ -38,13 +38,11 @@ namespace hill::model {
         explicit Model(const utility::FilePath& file_path);
 
         const Node* root() const { return m_root.get(); }
-        const std::unordered_map<unsigned int, mesh::Material>& materials() const { return m_materials; }
     private:
         void process_node(const aiNode* node, const aiScene* scene, TraversalCtx& ctx);
         mesh::Mesh process_mesh(const aiMesh* mesh, const aiScene* scene);
 
         std::shared_ptr<Node> m_root;
-        std::unordered_map<unsigned int, mesh::Material> m_materials;
     };
 
     struct ModelError : error::Error {

@@ -45,7 +45,7 @@ namespace hill::mesh {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
         std::vector<Texture> textures;
+        Material material;
         unsigned int vertex_attributes {};
-        unsigned int material_index {};
     };
 }

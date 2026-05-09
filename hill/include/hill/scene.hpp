@@ -11,6 +11,7 @@
 #include "hill/model.hpp"
 #include "hill/mesh.hpp"
 #include "hill/light.hpp"
+#include "hill/material.hpp"
 #include "hill/renderer_common.hpp"
 #include "hill/editor_common.hpp"
 
@@ -66,24 +67,32 @@ namespace hill::scene {
         void editor_inspect(editor::Editor& editor) override;
         void editor_nodes(editor::Editor& editor) override;
 
-        static std::shared_ptr<ModelNode> from_model(std::shared_ptr<model::Model> model);
+        static std::shared_ptr<ModelNode> from_model(const model::Model& model);
+
+        std::size_t meshes_count() const { return m_runtime.objects.size(); }
 
         glm::vec3 position {};
         glm::vec3 rotation {};
         glm::vec3 scale {1.0f};
+        std::unique_ptr<renderer_common::Mesh[]> meshes;
     private:
         struct TraversalCtx {
-            std::weak_ptr<ModelNode> current_node;
-            std::shared_ptr<model::Model> model;
+            std::weak_ptr<ModelNode> current_node;  // Used for propagation
         };
 
-        static void traverse(TraversalCtx& ctx, const model::Node* model_node);
+        static void traverse(TraversalCtx& ctx, const model::Node* node);
+        static std::unique_ptr<renderer_common::Mesh[]> create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes);
+        static std::shared_ptr<material::Material> create_material(const mesh::Mesh& mesh);
 
-        glm::mat4 m_transform = glm::identity<glm::mat4>();
-        std::shared_ptr<model::Model> m_model;
-        std::vector<std::shared_ptr<mesh::Mesh>> m_meshes;
-        std::vector<renderer_common::Object> m_objects;
-        bool m_configured {};
+        struct {
+            glm::mat4 transform = glm::identity<glm::mat4>();
+            std::vector<std::shared_ptr<mesh::Mesh>> meshes;
+        } m_static;
+
+        struct {
+            std::vector<renderer_common::Object> objects;
+            bool configured {};
+        } m_runtime;
 
         friend class renderer::Renderer;
         friend class editor::Editor;

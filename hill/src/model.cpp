@@ -219,11 +219,8 @@ namespace hill::model {
 
         const aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-        if (!m_materials.contains(mesh->mMaterialIndex)) {
-            m_materials[mesh->mMaterialIndex] = load_material_properties(material);
-        }
-
-        result_mesh.material_index = mesh->mMaterialIndex;
+        // Load the material even if it was already loaded before because of sharing, doesn't hurt much
+        result_mesh.material = load_material_properties(material);
 
         result_mesh.textures.append_range(load_material_textures(material, aiTextureType_DIFFUSE));
         result_mesh.textures.append_range(load_material_textures(material, aiTextureType_SPECULAR));

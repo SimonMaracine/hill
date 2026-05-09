@@ -20,10 +20,6 @@ namespace hill::editor {
 }
 
 namespace hill::renderer {
-    enum class ShaderSet {
-        Basic
-    };
-
     struct RenderObject : renderer_common::Object {
         glm::mat4 transform = glm::identity<glm::mat4>();
     };
@@ -62,10 +58,7 @@ namespace hill::renderer {
         void configure(scene::ModelNode* node);
 
         std::shared_ptr<vertex_array::VertexArray> create_vertex_array(const mesh::Mesh& mesh) const;
-        std::shared_ptr<material::Material> create_material(const mesh::Mesh& mesh, const model::Model& model);
-        std::shared_ptr<shader::Program> create_program(ShaderSet shader_set);
-
-        static ShaderSet choose_shader_set(const mesh::Mesh& mesh, const model::Model& model);
+        std::shared_ptr<shader::Program> create_program(renderer_common::ShaderSet shader_set);
 
         imgui::ImGui* m_imgui {};
         configuration::Configuration m_configuration;
@@ -81,7 +74,7 @@ namespace hill::renderer {
         std::shared_ptr<scene::RootNode> m_root_node;
 
         std::vector<RenderObject> m_objects;
-        std::unordered_map<ShaderSet, std::weak_ptr<shader::Program>> m_programs;
+        std::unordered_map<renderer_common::ShaderSet, std::weak_ptr<shader::Program>> m_programs;
 
         std::chrono::high_resolution_clock::time_point m_last_time {};
         std::chrono::duration<double> m_frame_time {};

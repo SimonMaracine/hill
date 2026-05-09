@@ -2,7 +2,6 @@
 
 #include <ranges>
 #include <cstring>
-#include <cassert>
 
 #include <imgui.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -56,8 +55,8 @@ namespace hill::renderer {
 
         m_camera.update_projection_view();
 
-        for (const auto& wprogram : m_programs | std::views::values) {
-            if (const auto program = wprogram.lock(); program) {
+        for (const auto& weak_program : m_programs | std::views::values) {
+            if (const auto program = weak_program.lock(); program) {
                 program->use();
                 program->upload_uniform_float16("u_projection_view", m_camera.projection_view());
                 program->upload_uniform_float3("u_directional_light.direction", m_directional_light.direction);
@@ -134,9 +133,9 @@ namespace hill::renderer {
     }
 
     void Renderer::render_node(TraversalCtx& ctx, scene::ModelNode* node) {
-        if (!node->m_configured) {
+        if (!node->m_runtime.configured) {
             configure(node);
-            node->m_configured = true;
+            node->m_runtime.configured = true;
         }
 
         glm::mat4 transform = glm::translate(glm::identity<glm::mat4>(), node->position);
@@ -145,9 +144,9 @@ namespace hill::renderer {
         transform = glm::rotate(transform, glm::radians(node->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
         transform = glm::scale(transform, node->scale);
 
-        ctx.transform *= node->m_transform * transform;
+        ctx.transform *= node->m_static.transform * transform;
 
-        for (const renderer_common::Object& object : node->m_objects) {
+        for (const renderer_common::Object& object : node->m_runtime.objects) {
             submit(RenderObject { object, ctx.transform });
         }
     }
@@ -158,7 +157,7 @@ namespace hill::renderer {
 
     void Renderer::draw_object(const RenderObject& object) const {
         object.material->m_program->use();
-        object.material->use();
+        object.material->upload_data();
         object.vertex_array->bind();
 
         object.material->m_program->upload_uniform_float16("u_transform", object.transform);
@@ -170,12 +169,14 @@ namespace hill::renderer {
     }
 
     void Renderer::configure(scene::ModelNode* node) {
-        assert(node->m_meshes.size() == node->m_objects.size());
+        node->m_runtime.objects.reserve(node->m_static.meshes.size());
 
-        for (const auto& [mesh, object] : std::views::zip(node->m_meshes, node->m_objects)) {
+        for (const auto& [i, mesh] : node->m_static.meshes | std::views::enumerate) {
+            renderer_common::Object& object = node->m_runtime.objects.emplace_back();
             object.elements_count = int(mesh->indices.size());
             object.vertex_array = create_vertex_array(*mesh);
-            object.material = create_material(*mesh, *node->m_model);
+            object.material = node->meshes[std::size_t(i)].material;
+            object.material->m_program = nullptr;  // FIXME
         }
     }
 
@@ -212,38 +213,12 @@ namespace hill::renderer {
         return vertex_array;
     }
 
-    std::shared_ptr<material::Material> Renderer::create_material(const mesh::Mesh& mesh, const model::Model& model) {
-        const ShaderSet shader_set = choose_shader_set(mesh, model);
-
-        if (const auto iter = m_programs.find(shader_set); iter != m_programs.end()) {
-            if (const auto program = iter->second.lock(); program) {
-                switch (shader_set) {
-                    case ShaderSet::Basic: {
-                        const auto material = std::make_shared<material::MaterialBasic>(program);
-                        material->ambient_color = model.materials().at(mesh.material_index).color_ambient;
-                        material->diffuse_color = model.materials().at(mesh.material_index).color_diffuse;
-                        material->specular_color = model.materials().at(mesh.material_index).color_specular;
-
-                        return material;
-                    }
-                }
-            }
-        }
-
-        const auto material = std::make_shared<material::MaterialBasic>(create_program(shader_set));
-        material->ambient_color = model.materials().at(mesh.material_index).color_ambient;
-        material->diffuse_color = model.materials().at(mesh.material_index).color_diffuse;
-        material->specular_color = model.materials().at(mesh.material_index).color_specular;
-
-        return material;
-    }
-
-    std::shared_ptr<shader::Program> Renderer::create_program(ShaderSet shader_set) {
+    std::shared_ptr<shader::Program> Renderer::create_program(renderer_common::ShaderSet shader_set) {
         std::string vertex_shader_source;
         std::string fragment_shader_source;
 
         switch (shader_set) {
-            case ShaderSet::Basic:
+            case renderer_common::ShaderSet::Basic:
                 utility::read_file("shaders/basic.vert", vertex_shader_source);
                 utility::read_file("shaders/basic.frag", fragment_shader_source);
                 break;
@@ -263,9 +238,5 @@ namespace hill::renderer {
         m_programs[shader_set] = program;
 
         return program;
-    }
-
-    ShaderSet Renderer::choose_shader_set(const mesh::Mesh& mesh, const model::Model& model) {
-        return ShaderSet::Basic;
     }
 }

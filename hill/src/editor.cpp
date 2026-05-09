@@ -184,17 +184,26 @@ namespace hill::editor {
 
     void Editor::inspect(ModelMesh* mesh) {
         ImGui::SeparatorText("Mesh");
-        material_basic(dynamic_cast<material::MaterialBasic*>(mesh->node->m_objects.at(mesh->index).material.get()));
+        material_basic(dynamic_cast<material::MaterialBasic*>(mesh->node->m_runtime.objects.at(mesh->index).material.get()));
     }
 
     void Editor::nodes(scene::ModelNode* node) {
-        for (std::size_t i {}; const auto& mesh : node->m_meshes) {
+        for (std::size_t i {}; const auto& mesh : node->m_static.meshes) {
             static constexpr auto flags = ImGuiTreeNodeFlags_DrawLinesFull | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Leaf;
-            // const bool selected = m_inspectable == node->shared_from_this();
+
+            const bool selected = [this, node, i] {
+                const auto inspectable = std::dynamic_pointer_cast<ModelMesh>(m_inspectable);
+
+                if (inspectable) {
+                    return inspectable->node == node->shared_from_this() && inspectable->index == i;
+                }
+
+                return false;
+            }();
 
             const bool open = ImGui::TreeNodeEx(
                 mesh->name.c_str(),
-                flags /*| (selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None)*/
+                flags | (selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None)
             );
 
             if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {

@@ -27,6 +27,7 @@ target_sources(
         "src/primitives_registry.cpp"
         "src/renderer.cpp"
         "src/renderer_command.cpp"
+        "src/renderer_common.cpp"
         "src/scene.cpp"
         "src/utility.cpp"
     PUBLIC
