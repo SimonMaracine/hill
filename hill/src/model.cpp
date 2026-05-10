@@ -21,28 +21,28 @@ namespace hill::model {
         }
     }
 
-    static constexpr glm::mat4 transformation(const aiMatrix4x4& matrix) {
-        glm::mat4 result_matrix;
-
-        result_matrix[0][0] = matrix.a1;
-        result_matrix[0][1] = matrix.a2;
-        result_matrix[0][2] = matrix.a3;
-        result_matrix[0][3] = matrix.a4;
-        result_matrix[1][0] = matrix.b1;
-        result_matrix[1][1] = matrix.b2;
-        result_matrix[1][2] = matrix.b3;
-        result_matrix[1][3] = matrix.b4;
-        result_matrix[2][0] = matrix.c1;
-        result_matrix[2][1] = matrix.c2;
-        result_matrix[2][2] = matrix.c3;
-        result_matrix[2][3] = matrix.c4;
-        result_matrix[3][0] = matrix.d1;
-        result_matrix[3][1] = matrix.d2;
-        result_matrix[3][2] = matrix.d3;
-        result_matrix[3][3] = matrix.d4;
-
-        return glm::transpose(result_matrix);
-    }
+    // static constexpr glm::mat4 transformation(const aiMatrix4x4& matrix) {
+    //     glm::mat4 result_matrix;
+    //
+    //     result_matrix[0][0] = matrix.a1;
+    //     result_matrix[0][1] = matrix.a2;
+    //     result_matrix[0][2] = matrix.a3;
+    //     result_matrix[0][3] = matrix.a4;
+    //     result_matrix[1][0] = matrix.b1;
+    //     result_matrix[1][1] = matrix.b2;
+    //     result_matrix[1][2] = matrix.b3;
+    //     result_matrix[1][3] = matrix.b4;
+    //     result_matrix[2][0] = matrix.c1;
+    //     result_matrix[2][1] = matrix.c2;
+    //     result_matrix[2][2] = matrix.c3;
+    //     result_matrix[2][3] = matrix.c4;
+    //     result_matrix[3][0] = matrix.d1;
+    //     result_matrix[3][1] = matrix.d2;
+    //     result_matrix[3][2] = matrix.d3;
+    //     result_matrix[3][3] = matrix.d4;
+    //
+    //     return glm::transpose(result_matrix);
+    // }
 
     static std::vector<mesh::Texture> load_material_textures(const aiMaterial* material, aiTextureType texture_type) {
         std::vector<mesh::Texture> textures;
@@ -136,7 +136,14 @@ namespace hill::model {
         const auto current_node = ctx.current_node.lock();
 
         current_node->name = node->mName.C_Str();
-        current_node->transform = transformation(node->mTransformation);
+
+        aiVector3D translation, scale;
+        aiQuaternion rotation;
+        node->mTransformation.Decompose(scale, rotation, translation);
+
+        current_node->translation = glm::vec3(translation.x, translation.y, translation.z);
+        current_node->rotation = glm::quat(rotation.w, rotation.x, rotation.y, rotation.z);
+        current_node->scale = glm::vec3(scale.x, scale.y, scale.z);
 
         for (unsigned int i {}; i < node->mNumMeshes; i++) {
             const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];

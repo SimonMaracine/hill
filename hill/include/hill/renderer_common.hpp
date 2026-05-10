@@ -20,9 +20,17 @@ namespace hill::renderer_common {
         std::shared_ptr<material::Material> material;
     };
 
-    enum class ShaderSet {
-        Basic
+    enum ShaderFeature : unsigned int {
+        ShaderFeatureBase = 0,
+        ShaderFeatureVertexColors = 1u << 0,
+        ShaderFeatureDiffuseMap = 1u << 1,
+        ShaderFeatureSpecularMap = 1u << 2,
+        ShaderFeatureNormalMap = 1u << 3,
+        ShaderFeatureEmissionMap = 1u << 4,
+        ShaderFeatureShadowed = 1u << 5
     };
 
-    ShaderSet choose_shader_set(const mesh::Mesh& mesh);
+    using ShaderFeatureSet = unsigned int;
+
+    ShaderFeatureSet choose_shader_feature_set(const mesh::Mesh& mesh);
 }

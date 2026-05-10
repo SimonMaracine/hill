@@ -4,7 +4,7 @@
 #include <vector>
 #include <filesystem>
 
-#include <glm/glm.hpp>
+#include "hill/glm.h++"
 
 namespace hill::mesh {
     enum VertexAttributes : unsigned int {

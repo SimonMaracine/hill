@@ -4,7 +4,6 @@
 #include <cstring>
 
 #include <imgui.h>
-#include <glm/gtc/type_ptr.hpp>
 
 #include "hill/primitives/vertex_buffer.hpp"
 #include "hill/primitives/element_buffer.hpp"
@@ -138,13 +137,15 @@ namespace hill::renderer {
             node->m_runtime.configured = true;
         }
 
-        glm::mat4 transform = glm::translate(glm::identity<glm::mat4>(), node->position);
-        transform = glm::rotate(transform, glm::radians(node->rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-        transform = glm::rotate(transform, glm::radians(node->rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-        transform = glm::rotate(transform, glm::radians(node->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-        transform = glm::scale(transform, node->scale);
+        const auto translation = node->m_static.translation + node->translation;
+        const auto rotation = node->m_static.rotation * glm::quat(glm::radians(node->rotation));
+        const auto scale = node->m_static.scale * node->scale;
 
-        ctx.transform *= node->m_static.transform * transform;
+        glm::mat4 transform = glm::translate(glm::identity<glm::mat4>(), translation);
+        transform *= glm::toMat4(rotation);
+        transform = glm::scale(transform, scale);
+
+        ctx.transform *= transform;
 
         for (const renderer_common::Object& object : node->m_runtime.objects) {
             submit(RenderObject { object, ctx.transform });
@@ -169,14 +170,14 @@ namespace hill::renderer {
     }
 
     void Renderer::configure(scene::ModelNode* node) {
-        node->m_runtime.objects.reserve(node->m_static.meshes.size());
+        node->m_runtime.objects.reserve(node->meshes_count());
 
         for (const auto& [i, mesh] : node->m_static.meshes | std::views::enumerate) {
             renderer_common::Object& object = node->m_runtime.objects.emplace_back();
             object.elements_count = int(mesh->indices.size());
             object.vertex_array = create_vertex_array(*mesh);
             object.material = node->meshes[std::size_t(i)].material;
-            object.material->m_program = nullptr;  // FIXME
+            object.material->m_program = get_program(*mesh);
         }
     }
 
@@ -213,12 +214,12 @@ namespace hill::renderer {
         return vertex_array;
     }
 
-    std::shared_ptr<shader::Program> Renderer::create_program(renderer_common::ShaderSet shader_set) {
+    std::shared_ptr<shader::Program> Renderer::create_program(renderer_common::ShaderFeatureSet shader_feature_set) {
         std::string vertex_shader_source;
         std::string fragment_shader_source;
 
-        switch (shader_set) {
-            case renderer_common::ShaderSet::Basic:
+        switch (shader_feature_set) {
+            case renderer_common::ShaderFeatureBase:
                 utility::read_file("shaders/basic.vert", vertex_shader_source);
                 utility::read_file("shaders/basic.frag", fragment_shader_source);
                 break;
@@ -235,8 +236,20 @@ namespace hill::renderer {
         program->attach_shader(fragment_shader);
         program->link();
 
-        m_programs[shader_set] = program;
+        m_programs[shader_feature_set] = program;
 
         return program;
+    }
+
+    std::shared_ptr<shader::Program> Renderer::get_program(const mesh::Mesh& mesh) {
+        const auto shader_feature_set = renderer_common::choose_shader_feature_set(mesh);
+
+        if (const auto iter = m_programs.find(shader_feature_set); iter != m_programs.end()) {
+            if (const auto program = iter->second.lock(); program) {
+                return program;
+            }
+        }
+
+        return create_program(shader_feature_set);
     }
 }

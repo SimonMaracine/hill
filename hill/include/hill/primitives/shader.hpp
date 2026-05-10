@@ -5,10 +5,9 @@
 #include <memory>
 #include <unordered_set>
 
-#include <glm/glm.hpp>
-
 #include "hill/primitives/common.hpp"
 #include "hill/error.hpp"
+#include "hill/glm.h++"
 
 namespace hill::shader {
     struct ShaderError : error::Error {

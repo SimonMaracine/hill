@@ -3,10 +3,9 @@
 #include <memory>
 #include <string>
 
-#include <glm/glm.hpp>
-
 #include "material.hpp"
 #include "editor_common.hpp"
+#include "hill/glm.h++"
 
 namespace hill::renderer {
     class Renderer;

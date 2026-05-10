@@ -5,15 +5,13 @@
 #include <string>
 #include <format>
 
-#include <glm/glm.hpp>
-#include <glm/ext/matrix_transform.hpp>
-
 #include "hill/model.hpp"
 #include "hill/mesh.hpp"
 #include "hill/light.hpp"
 #include "hill/material.hpp"
 #include "hill/renderer_common.hpp"
 #include "hill/editor_common.hpp"
+#include "hill/glm.h++"
 
 namespace hill::renderer {
     struct TraversalCtx;
@@ -69,9 +67,9 @@ namespace hill::scene {
 
         static std::shared_ptr<ModelNode> from_model(const model::Model& model);
 
-        std::size_t meshes_count() const { return m_runtime.objects.size(); }
+        std::size_t meshes_count() const { return m_meshes_count; }
 
-        glm::vec3 position {};
+        glm::vec3 translation {};
         glm::vec3 rotation {};
         glm::vec3 scale {1.0f};
         std::unique_ptr<renderer_common::Mesh[]> meshes;
@@ -81,11 +79,16 @@ namespace hill::scene {
         };
 
         static void traverse(TraversalCtx& ctx, const model::Node* node);
-        static std::unique_ptr<renderer_common::Mesh[]> create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes);
+        static std::unique_ptr<renderer_common::Mesh[]> create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes, std::size_t& count);
         static std::shared_ptr<material::Material> create_material(const mesh::Mesh& mesh);
 
+        std::size_t m_meshes_count {};
+
         struct {
-            glm::mat4 transform = glm::identity<glm::mat4>();
+            // glm::mat4 transform = glm::identity<glm::mat4>();
+            glm::vec3 translation {};
+            glm::quat rotation = glm::identity<glm::quat>();
+            glm::vec3 scale {1.0f};
             std::vector<std::shared_ptr<mesh::Mesh>> meshes;
         } m_static;
 

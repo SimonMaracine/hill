@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include "hill/glm.h++"
 
 namespace hill::renderer_command {
     enum class Buffers {

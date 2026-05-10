@@ -1,8 +1,6 @@
 #pragma once
 
-#include <glm/glm.hpp>
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_transform.hpp>
+#include "hill/glm.h++"
 
 namespace hill::camera {
     class Camera {

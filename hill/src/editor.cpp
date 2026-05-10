@@ -3,7 +3,6 @@
 #include <ranges>
 
 #include <imgui.h>
-#include <glm/gtc/type_ptr.hpp>
 
 #include "hill/renderer.hpp"
 #include "hill/primitives_registry.hpp"
@@ -169,9 +168,9 @@ namespace hill::editor {
 
     void Editor::inspect(scene::ModelNode* node) {
         ImGui::SeparatorText("Model");
-        ImGui::DragFloat3("Position", glm::value_ptr(node->position), 0.1f);
-        ImGui::DragFloat3("Rotation", glm::value_ptr(node->rotation), 1.0f, 0.0f, 360.0f);
-        ImGui::DragFloat3("Scale", glm::value_ptr(node->scale), 0.01f, 0.0f, 100.0f);
+        ImGui::DragFloat3("Translation", glm::value_ptr(node->translation), 0.125f);
+        ImGui::DragFloat3("Rotation", glm::value_ptr(node->rotation), 1.0f);
+        ImGui::DragFloat3("Scale", glm::value_ptr(node->scale), 0.025f, 0.0f, 1000.0f);
     }
 
     void Editor::inspect(scene::DirectionalLightNode* node) {
@@ -184,7 +183,7 @@ namespace hill::editor {
 
     void Editor::inspect(ModelMesh* mesh) {
         ImGui::SeparatorText("Mesh");
-        material_basic(dynamic_cast<material::MaterialBasic*>(mesh->node->m_runtime.objects.at(mesh->index).material.get()));
+        material_basic(dynamic_cast<material::MaterialBasic*>(mesh->node->meshes[mesh->index].material.get()));
     }
 
     void Editor::nodes(scene::ModelNode* node) {
@@ -228,7 +227,7 @@ namespace hill::editor {
         ImGui::DragFloat3("Ambient", glm::value_ptr(material->ambient_color), 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat3("Diffuse", glm::value_ptr(material->diffuse_color), 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat3("Specular", glm::value_ptr(material->specular_color), 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat("Shininess", &material->shininess, 1.0f, 1.0f, 256.0f);
+        ImGui::DragFloat("Shininess", &material->shininess, 1.0f, 1.0f, 512.0f);
 
         return true;
     }

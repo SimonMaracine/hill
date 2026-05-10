@@ -2,9 +2,8 @@
 
 #include <memory>
 
-#include <glm/glm.hpp>
-
 #include "hill/primitives/shader.hpp"
+#include "hill/glm.h++"
 
 namespace hill::renderer {
     class Renderer;

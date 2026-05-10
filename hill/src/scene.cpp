@@ -47,8 +47,10 @@ namespace hill::scene {
         }
 
         current_node->m_name = node->name;
-        current_node->meshes = create_meshes(node->meshes);
-        current_node->m_static.transform = node->transform;
+        current_node->meshes = create_meshes(node->meshes, current_node->m_meshes_count);
+        current_node->m_static.translation = node->translation;
+        current_node->m_static.rotation = node->rotation;
+        current_node->m_static.scale = node->scale;
         current_node->m_static.meshes.append_range(node->meshes);
 
         for (const auto& child : node->children) {
@@ -60,7 +62,8 @@ namespace hill::scene {
         }
     }
 
-    std::unique_ptr<renderer_common::Mesh[]> ModelNode::create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes) {
+    std::unique_ptr<renderer_common::Mesh[]> ModelNode::create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes, std::size_t& count) {
+        count = meshes.size();
         auto result_meshes = std::make_unique<renderer_common::Mesh[]>(meshes.size());
 
         for (std::size_t i {}; const auto& mesh : meshes) {
@@ -75,14 +78,13 @@ namespace hill::scene {
     std::shared_ptr<material::Material> ModelNode::create_material(const mesh::Mesh& mesh) {
         std::shared_ptr<material::Material> result_material;
 
-        // if (const auto iter = m_programs.find(shader_set); iter != m_programs.end()) {
-        //     if (const auto program = iter->second.lock(); program) {
-        switch (renderer_common::choose_shader_set(mesh)) {
-            case renderer_common::ShaderSet::Basic: {
+        switch (renderer_common::choose_shader_feature_set(mesh)) {
+            case renderer_common::ShaderFeatureBase: {
                 auto material = std::make_shared<material::MaterialBasic>();
                 material->ambient_color = mesh.material.color_ambient;
                 material->diffuse_color = mesh.material.color_diffuse;
                 material->specular_color = mesh.material.color_specular;
+                material->shininess = mesh.material.shininess;
 
                 result_material = std::move(material);
             }

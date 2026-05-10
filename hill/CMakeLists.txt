@@ -47,6 +47,7 @@ target_sources(
             "include/hill/editor.hpp"
             "include/hill/editor_common.hpp"
             "include/hill/error.hpp"
+            "include/hill/glm.h++"
             "include/hill/graphics_api.hpp"
             "include/hill/image.hpp"
             "include/hill/imgui.hpp"
@@ -72,5 +73,7 @@ set_target_platform_macros(hill)
 if(HILL_DISTRIBUTION)
     target_compile_definitions(hill PRIVATE "NDEBUG")
 endif()
+
+target_compile_definitions(hill PUBLIC "GLM_ENABLE_EXPERIMENTAL")
 
 set(HILL_IMGUI_ROOT "${HILL_IMGUI_ROOT}" PARENT_SCOPE)

@@ -5,8 +5,6 @@
 #include <vector>
 #include <unordered_map>
 
-#include <glm/ext/matrix_transform.hpp>
-
 #include "hill/configuration.hpp"
 #include "hill/imgui.hpp"
 #include "hill/camera.hpp"
@@ -14,6 +12,7 @@
 #include "hill/light.hpp"
 #include "hill/material.hpp"
 #include "hill/renderer_common.hpp"
+#include "hill/glm.h++"
 
 namespace hill::editor {
     class Editor;
@@ -58,7 +57,8 @@ namespace hill::renderer {
         void configure(scene::ModelNode* node);
 
         std::shared_ptr<vertex_array::VertexArray> create_vertex_array(const mesh::Mesh& mesh) const;
-        std::shared_ptr<shader::Program> create_program(renderer_common::ShaderSet shader_set);
+        std::shared_ptr<shader::Program> create_program(renderer_common::ShaderFeatureSet shader_feature_set);
+        std::shared_ptr<shader::Program> get_program(const mesh::Mesh& mesh);
 
         imgui::ImGui* m_imgui {};
         configuration::Configuration m_configuration;
@@ -74,7 +74,7 @@ namespace hill::renderer {
         std::shared_ptr<scene::RootNode> m_root_node;
 
         std::vector<RenderObject> m_objects;
-        std::unordered_map<renderer_common::ShaderSet, std::weak_ptr<shader::Program>> m_programs;
+        std::unordered_map<renderer_common::ShaderFeatureSet, std::weak_ptr<shader::Program>> m_programs;
 
         std::chrono::high_resolution_clock::time_point m_last_time {};
         std::chrono::duration<double> m_frame_time {};

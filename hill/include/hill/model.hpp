@@ -5,12 +5,10 @@
 #include <unordered_map>
 #include <memory>
 
-#include <glm/glm.hpp>
-#include "glm/ext/matrix_transform.hpp"
-
 #include "hill/mesh.hpp"
 #include "hill/utility.hpp"
 #include "hill/error.hpp"
+#include "hill/glm.h++"
 
 struct aiScene;
 struct aiNode;
@@ -23,7 +21,10 @@ namespace hill::model {
 
         std::string name;
         std::vector<std::shared_ptr<mesh::Mesh>> meshes;
-        glm::mat4 transform = glm::identity<glm::mat4>();
+        // glm::mat4 transform = glm::identity<glm::mat4>();
+        glm::vec3 translation {};
+        glm::quat rotation = glm::identity<glm::quat>();
+        glm::vec3 scale {1.0f};
     };
 
     struct TraversalCtx {
