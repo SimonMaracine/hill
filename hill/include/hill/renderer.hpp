@@ -66,7 +66,7 @@ namespace hill::renderer {
         int m_window_width {};
         int m_window_height {};
 
-        float m_background_color[3] { 0.4f, 0.1f, 0.6f };
+        glm::vec3 m_background_color { 0.6f, 0.6f, 0.7f };
 
         camera::Camera m_camera;
         light::DirectionalLight m_directional_light;

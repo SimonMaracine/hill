@@ -35,6 +35,8 @@ namespace hill::editor {
     private:
         void performance(renderer::Renderer& renderer);
 
+        void renderer(renderer::Renderer& renderer);
+
         void primitives_registry(renderer::Renderer& renderer);
         void primitives_object(const char* label, const auto& objects);
 
@@ -51,6 +53,8 @@ namespace hill::editor {
 
         bool material_basic(material::MaterialBasic* material);
 
+        void set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name);
+
         struct Camera {
             glm::vec3 position {0.0f, 0.0f, 20.0f};
             glm::vec3 front {0.0f, 0.0f, -1.0f};
@@ -60,6 +64,8 @@ namespace hill::editor {
             float yaw = -90.0f;
             float move_speed_multiplier = 1.0f;
         } m_camera;
+
+        char m_buffer_name[128] {};
 
         std::shared_ptr<editor_common::Inspectable> m_inspectable;
 

@@ -1,6 +1,7 @@
 #include "hill/editor.hpp"
 
 #include <ranges>
+#include <cstring>
 
 #include <imgui.h>
 
@@ -9,6 +10,22 @@
 #include "hill/scene.hpp"
 
 namespace hill::editor {
+    static bool input_text(const char* label, char* buffer, std::size_t size) {
+        if (ImGui::InputText(label, buffer, size, ImGuiInputTextFlags_EnterReturnsTrue)) {
+            if (*buffer != 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static void separator() {
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+    }
+
     void ModelMesh::editor_inspect(Editor& editor) {
         editor.inspect(this);
     }
@@ -27,11 +44,8 @@ namespace hill::editor {
 
         ImGui::ShowDemoWindow();
 
-        ImGui::Begin("Test");
-        ImGui::ColorEdit3("Background Color", renderer.m_background_color);
-        ImGui::End();
-
         performance(renderer);
+        Editor::renderer(renderer);
         primitives_registry(renderer);
         scene_hierarchy(renderer);
         inspector(renderer);
@@ -91,6 +105,14 @@ namespace hill::editor {
         ImGui::End();
     }
 
+    void Editor::renderer(renderer::Renderer& renderer) {
+        if (ImGui::Begin("Renderer")) {
+            ImGui::ColorEdit3("Background Color", glm::value_ptr(renderer.m_background_color));
+        }
+
+        ImGui::End();
+    }
+
     void Editor::primitives_registry(renderer::Renderer&) {
         if (ImGui::Begin("Primitives Registry")) {
             primitives_object("Vertex Buffers", primitives_registry::Registry::get().primitives(primitives_registry::Primitive::VertexBuffer));
@@ -138,7 +160,7 @@ namespace hill::editor {
         );
 
         if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
-            m_inspectable = node->shared_from_this();
+            set_inspectable(node->shared_from_this(), node->shared_from_this()->name());
         }
 
         if (open) {
@@ -168,13 +190,27 @@ namespace hill::editor {
 
     void Editor::inspect(scene::ModelNode* node) {
         ImGui::SeparatorText("Model");
+
+        if (input_text("Name", m_buffer_name, sizeof(m_buffer_name))) {
+            node->m_name = m_buffer_name;
+        }
+
+        separator();
+
         ImGui::DragFloat3("Translation", glm::value_ptr(node->translation), 0.125f);
         ImGui::DragFloat3("Rotation", glm::value_ptr(node->rotation), 1.0f);
-        ImGui::DragFloat3("Scale", glm::value_ptr(node->scale), 0.025f, 0.0f, 1000.0f);
+        ImGui::DragFloat3("Scale", glm::value_ptr(node->scale), 0.125f, 0.0f, 1000.0f);
     }
 
     void Editor::inspect(scene::DirectionalLightNode* node) {
         ImGui::SeparatorText("Directional Light");
+
+        if (input_text("Name", m_buffer_name, sizeof(m_buffer_name))) {
+            node->m_name = m_buffer_name;
+        }
+
+        separator();
+
         ImGui::DragFloat3("Direction", glm::value_ptr(node->directional_light.direction), 0.1f);
         ImGui::DragFloat3("Ambient", glm::value_ptr(node->directional_light.ambient_color), 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat3("Diffuse", glm::value_ptr(node->directional_light.diffuse_color), 0.01f, 0.0f, 1.0f);
@@ -183,6 +219,13 @@ namespace hill::editor {
 
     void Editor::inspect(ModelMesh* mesh) {
         ImGui::SeparatorText("Mesh");
+
+        if (input_text("Name", m_buffer_name, sizeof(m_buffer_name))) {
+            mesh->node->meshes[mesh->index].name = m_buffer_name;
+        }
+
+        separator();
+
         material_basic(dynamic_cast<material::MaterialBasic*>(mesh->node->meshes[mesh->index].material.get()));
     }
 
@@ -210,7 +253,7 @@ namespace hill::editor {
                 model_mesh.node = std::static_pointer_cast<scene::ModelNode>(node->shared_from_this());
                 model_mesh.index = i++;
 
-                m_inspectable = std::make_shared<ModelMesh>(model_mesh);
+                set_inspectable(std::make_shared<ModelMesh>(model_mesh), model_mesh.node->meshes[model_mesh.index].name);
             }
 
             if (open) {
@@ -230,5 +273,10 @@ namespace hill::editor {
         ImGui::DragFloat("Shininess", &material->shininess, 1.0f, 1.0f, 512.0f);
 
         return true;
+    }
+
+    void Editor::set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name) {
+        m_inspectable = std::move(inspectable);
+        std::strncpy(m_buffer_name, name.c_str(), sizeof(m_buffer_name) - 1);
     }
 }
