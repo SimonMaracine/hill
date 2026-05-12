@@ -105,7 +105,19 @@ void SdlExample::end(ImDrawData* draw_data) const {
 
 void SdlExample::update() {
     m_editor.update(m_renderer);
-    m_editor.update_camera(m_renderer);
+    m_editor.update_camera(m_renderer, *this);
+}
+
+void SdlExample::grab_mouse() const {
+    if (!SDL_SetWindowRelativeMouseMode(m_window, true)) {
+        std::println(stderr, "SDL_SetWindowRelativeMouseMode: {}", SDL_GetError());
+    }
+}
+
+void SdlExample::ungrab_mouse() const {
+    if (!SDL_SetWindowRelativeMouseMode(m_window, false)) {
+        std::println(stderr, "SDL_SetWindowRelativeMouseMode: {}", SDL_GetError());
+    }
 }
 
 void SdlExample::run() {

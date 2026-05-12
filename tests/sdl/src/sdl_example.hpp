@@ -5,8 +5,10 @@
 
 struct SDL_Window;
 
-class SdlExample : public hill::imgui::ImGui {
+class SdlExample : public hill::imgui::ImGui, public hill::windowing_system::WindowingSystem {
 public:
+
+
     SdlExample();
     ~SdlExample() override;
 
@@ -20,6 +22,9 @@ public:
     void begin() const override;
     void end(ImDrawData* draw_data) const override;
     void update() override;
+
+    void grab_mouse() const override;
+    void ungrab_mouse() const override;
 
     void run();
 private:

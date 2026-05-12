@@ -51,15 +51,23 @@ namespace hill::editor {
         inspector(renderer);
     }
 
-    void Editor::update_camera(renderer::Renderer& renderer) {
-        static constexpr float MOVE_SPEED = 5.0f;
+    void Editor::update_camera(renderer::Renderer& renderer, windowing_system::WindowingSystem& windowing_system) {
+        static constexpr float MOVE_SPEED = 10.0f;
         static constexpr float LOOK_SPEED = 7.0f;
 
         if (!ImGui::GetIO().WantCaptureMouse) {
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+                windowing_system.grab_mouse();
+            }
+
+            if (ImGui::IsMouseReleased(ImGuiMouseButton_Right)) {
+                windowing_system.ungrab_mouse();
+            }
+
             if (ImGui::IsMouseDragging(ImGuiMouseButton_Right)) {
                 const ImVec2 delta = ImGui::GetIO().MouseDelta;
-                m_camera.yaw += -delta.x * LOOK_SPEED * ImGui::GetIO().DeltaTime;
-                m_camera.pitch += delta.y * LOOK_SPEED * ImGui::GetIO().DeltaTime;
+                m_camera.yaw += delta.x * LOOK_SPEED * ImGui::GetIO().DeltaTime;
+                m_camera.pitch += -delta.y * LOOK_SPEED * ImGui::GetIO().DeltaTime;
             }
         }
 
@@ -73,18 +81,34 @@ namespace hill::editor {
                 m_camera.move_speed_multiplier = 1.0f;
             }
 
+            glm::vec3 position_offset {};
+
             if (ImGui::IsKeyDown(ImGuiKey_W)) {
-                m_camera.position += m_camera.front * MOVE_SPEED * m_camera.move_speed_multiplier * ImGui::GetIO().DeltaTime;
-            } else if (ImGui::IsKeyDown(ImGuiKey_S)) {
-                m_camera.position -= m_camera.front * MOVE_SPEED * m_camera.move_speed_multiplier * ImGui::GetIO().DeltaTime;
-            } else if (ImGui::IsKeyDown(ImGuiKey_A)) {
-                m_camera.position -= glm::normalize(glm::cross(m_camera.front, m_camera.up)) * MOVE_SPEED * m_camera.move_speed_multiplier * ImGui::GetIO().DeltaTime;
-            } else if (ImGui::IsKeyDown(ImGuiKey_D)) {
-                m_camera.position += glm::normalize(glm::cross(m_camera.front, m_camera.up)) * MOVE_SPEED * m_camera.move_speed_multiplier * ImGui::GetIO().DeltaTime;
-            } else if (ImGui::IsKeyDown(ImGuiKey_E)) {
-                m_camera.position += m_camera.up * MOVE_SPEED * m_camera.move_speed_multiplier * ImGui::GetIO().DeltaTime;
-            } else if (ImGui::IsKeyDown(ImGuiKey_Q)) {
-                m_camera.position -= m_camera.up * MOVE_SPEED * m_camera.move_speed_multiplier * ImGui::GetIO().DeltaTime;
+                position_offset += m_camera.front;
+            }
+
+            if (ImGui::IsKeyDown(ImGuiKey_S)) {
+                position_offset -= m_camera.front;
+            }
+
+            if (ImGui::IsKeyDown(ImGuiKey_A)) {
+                position_offset -= glm::normalize(glm::cross(m_camera.front, m_camera.up));
+            }
+
+            if (ImGui::IsKeyDown(ImGuiKey_D)) {
+                position_offset += glm::normalize(glm::cross(m_camera.front, m_camera.up));
+            }
+
+            if (ImGui::IsKeyDown(ImGuiKey_E)) {
+                position_offset += m_camera.up;
+            }
+
+            if (ImGui::IsKeyDown(ImGuiKey_Q)) {
+                position_offset -= m_camera.up;
+            }
+
+            if (glm::length(position_offset) > 0.0f) {
+                m_camera.position += glm::normalize(position_offset) * MOVE_SPEED * m_camera.move_speed_multiplier * ImGui::GetIO().DeltaTime;
             }
         }
 
@@ -99,7 +123,7 @@ namespace hill::editor {
 
     void Editor::performance(renderer::Renderer& renderer) {
         if (ImGui::Begin("Performance")) {
-            ImGui::Text("Frame time: %.02f", renderer.m_frame_time.count() * 1000.0);
+            ImGui::Text("Frame Time: %.02f", renderer.m_frame_time.count() * 1000.0);
         }
 
         ImGui::End();

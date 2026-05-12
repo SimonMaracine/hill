@@ -3,8 +3,9 @@
 #include <memory>
 #include <string>
 
-#include "material.hpp"
-#include "editor_common.hpp"
+#include "hill/editor_common.hpp"
+#include "hill/windowing_system.hpp"
+#include "hill/material.hpp"
 #include "hill/glm.h++"
 
 namespace hill::renderer {
@@ -31,7 +32,7 @@ namespace hill::editor {
         void initialize();
         void uninitialize();
         void update(renderer::Renderer& renderer);
-        void update_camera(renderer::Renderer& renderer);
+        void update_camera(renderer::Renderer& renderer, windowing_system::WindowingSystem& windowing_system);
     private:
         void performance(renderer::Renderer& renderer);
 
@@ -58,7 +59,7 @@ namespace hill::editor {
         struct Camera {
             glm::vec3 position {0.0f, 0.0f, 20.0f};
             glm::vec3 front {0.0f, 0.0f, -1.0f};
-            glm::vec3 up {0.0f, 1.0f, 0.0f};
+            static constexpr glm::vec3 up {0.0f, 1.0f, 0.0f};
 
             float pitch {};
             float yaw = -90.0f;

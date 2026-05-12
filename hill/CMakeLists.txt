@@ -61,6 +61,7 @@ target_sources(
             "include/hill/renderer_common.hpp"
             "include/hill/scene.hpp"
             "include/hill/utility.hpp"
+            "include/hill/windowing_system.hpp"
 )
 
 target_link_libraries(hill PRIVATE glad stb_image assimp::assimp)
