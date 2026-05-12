@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include <imgui.h>
+#include <ImGuizmo.h>
 
 #include "hill/renderer.hpp"
 #include "hill/primitives_registry.hpp"
@@ -49,6 +50,7 @@ namespace hill::editor {
         primitives_registry(renderer);
         scene_hierarchy(renderer);
         inspector(renderer);
+        gizmo(renderer);
     }
 
     void Editor::update_camera(renderer::Renderer& renderer, windowing_system::WindowingSystem& windowing_system) {
@@ -297,6 +299,53 @@ namespace hill::editor {
         ImGui::DragFloat("Shininess", &material->shininess, 1.0f, 1.0f, 512.0f);
 
         return true;
+    }
+
+    void Editor::gizmo(renderer::Renderer& renderer) {
+        if (!m_inspectable) {
+            return;
+        }
+
+        const auto model_node = std::dynamic_pointer_cast<scene::ModelNode>(m_inspectable);
+
+        if (!model_node) {
+            return;
+        }
+
+        float transform[16] {};
+
+        ImGuizmo::RecomposeMatrixFromComponents(
+            glm::value_ptr(model_node->translation),
+            glm::value_ptr(model_node->rotation),
+            glm::value_ptr(model_node->scale),
+            transform
+        );
+
+        m_gizmo.operation = ImGuizmo::OPERATION::TRANSLATE;
+        m_gizmo.mode = ImGuizmo::MODE::WORLD;
+
+        const ImGuiIO& io = ImGui::GetIO();
+        ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+
+        (void) ImGuizmo::Manipulate(
+            glm::value_ptr(renderer.m_camera.view()),
+            glm::value_ptr(renderer.m_camera.projection()),
+            ImGuizmo::OPERATION(m_gizmo.operation),
+            ImGuizmo::MODE(m_gizmo.mode),
+            transform,
+            nullptr,
+            nullptr
+        );
+
+        float translation[3] {};
+        float rotation[3] {};
+        float scale[3] {};
+
+        ImGuizmo::DecomposeMatrixToComponents(transform, translation, rotation, scale);
+
+        model_node->translation = glm::vec3(translation[0], translation[1], translation[2]);
+        model_node->rotation = glm::vec3(rotation[0], rotation[1], rotation[2]);
+        model_node->scale = glm::vec3(scale[0], scale[1], scale[2]);
     }
 
     void Editor::set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name) {

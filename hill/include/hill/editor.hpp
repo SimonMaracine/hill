@@ -54,6 +54,8 @@ namespace hill::editor {
 
         bool material_basic(material::MaterialBasic* material);
 
+        void gizmo(renderer::Renderer& renderer);
+
         void set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name);
 
         struct Camera {
@@ -65,6 +67,11 @@ namespace hill::editor {
             float yaw = -90.0f;
             float move_speed_multiplier = 1.0f;
         } m_camera;
+
+        struct Gizmo {
+            int operation {};
+            int mode {};
+        } m_gizmo;
 
         char m_buffer_name[128] {};
 

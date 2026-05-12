@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include <imgui.h>
+#include <ImGuizmo.h>
 
 #include "hill/primitives/vertex_buffer.hpp"
 #include "hill/primitives/element_buffer.hpp"
@@ -94,6 +95,7 @@ namespace hill::renderer {
     void Renderer::imgui_render() const {
         m_imgui->begin();
         ImGui::NewFrame();
+        ImGuizmo::BeginFrame();
 
         m_imgui->update();
 
