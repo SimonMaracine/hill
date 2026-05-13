@@ -3,7 +3,6 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
-#include <format>
 
 #include "hill/model.hpp"
 #include "hill/mesh.hpp"
@@ -67,12 +66,12 @@ namespace hill::scene {
 
         static std::shared_ptr<ModelNode> from_model(const model::Model& model);
 
+        const renderer_common::Mesh* meshes() const { return m_meshes.get(); }
         std::size_t meshes_count() const { return m_meshes_count; }
 
         glm::vec3 translation {};
         glm::vec3 rotation {};
         glm::vec3 scale {1.0f};
-        std::unique_ptr<renderer_common::Mesh[]> meshes;
     private:
         struct TraversalCtx {
             std::weak_ptr<ModelNode> current_node;  // Used for propagation
@@ -82,20 +81,20 @@ namespace hill::scene {
         static std::unique_ptr<renderer_common::Mesh[]> create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes, std::size_t& count);
         static std::shared_ptr<material::Material> create_material(const mesh::Mesh& mesh);
 
-        std::size_t m_meshes_count {};
-
         struct {
-            // glm::mat4 transform = glm::identity<glm::mat4>();
-            glm::vec3 translation {};
-            glm::quat rotation = glm::identity<glm::quat>();
-            glm::vec3 scale {1.0f};
+            // glm::mat4 local_transform = glm::identity<glm::mat4>();
+            glm::vec3 local_translation {};
+            glm::quat local_rotation = glm::identity<glm::quat>();
+            glm::vec3 local_scale {1.0f};
             std::vector<std::shared_ptr<mesh::Mesh>> meshes;
         } m_static;
 
-        struct {
-            std::vector<renderer_common::Object> objects;
-            bool configured {};
-        } m_runtime;
+        std::unique_ptr<renderer_common::Mesh[]> m_meshes;
+        std::size_t m_meshes_count {};
+        glm::mat4 m_world_transform = glm::identity<glm::mat4>();
+        std::vector<renderer_common::Object> m_render_objects;
+        bool m_render_objects_dirty = true;
+        bool m_world_transform_dirty = true;
 
         friend class renderer::Renderer;
         friend class editor::Editor;

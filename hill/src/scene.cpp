@@ -47,10 +47,10 @@ namespace hill::scene {
         }
 
         current_node->m_name = node->name;
-        current_node->meshes = create_meshes(node->meshes, current_node->m_meshes_count);
-        current_node->m_static.translation = node->translation;
-        current_node->m_static.rotation = node->rotation;
-        current_node->m_static.scale = node->scale;
+        current_node->m_meshes = create_meshes(node->meshes, current_node->m_meshes_count);
+        current_node->m_static.local_translation = node->translation;
+        current_node->m_static.local_rotation = node->rotation;
+        current_node->m_static.local_scale = node->scale;
         current_node->m_static.meshes.append_range(node->meshes);
 
         for (const auto& child : node->children) {

@@ -53,8 +53,6 @@ namespace hill::renderer {
         renderer_command::clear_color({ m_background_color[0], m_background_color[1], m_background_color[2], 1.0f });
         renderer_command::clear(renderer_command::Buffers::CD);
 
-        m_camera.update_projection_view();
-
         for (const auto& weak_program : m_programs | std::views::values) {
             if (const auto program = weak_program.lock(); program) {
                 program->use();
@@ -134,23 +132,31 @@ namespace hill::renderer {
     }
 
     void Renderer::render_node(TraversalCtx& ctx, scene::ModelNode* node) {
-        if (!node->m_runtime.configured) {
+        if (node->m_render_objects_dirty) {
+            node->m_render_objects_dirty = false;
             configure(node);
-            node->m_runtime.configured = true;
         }
 
-        const auto translation = node->m_static.translation + node->translation;
-        const auto rotation = node->m_static.rotation * glm::quat(glm::radians(node->rotation));
-        const auto scale = node->m_static.scale * node->scale;
+        const auto translation = node->m_static.local_translation + node->translation;
+        const auto rotation = node->m_static.local_rotation * glm::quat(glm::radians(node->rotation));
+        const auto scale = node->m_static.local_scale * node->scale;
 
-        glm::mat4 transform = glm::translate(glm::identity<glm::mat4>(), translation);
-        transform *= glm::toMat4(rotation);
-        transform = glm::scale(transform, scale);
+        glm::mat4 local_transform = glm::identity<glm::mat4>();
+        local_transform = glm::translate(local_transform, translation);
+        local_transform *= glm::toMat4(rotation);
+        local_transform = glm::scale(local_transform, scale);
 
-        ctx.transform *= transform;
+        ctx.dirty |= node->m_world_transform_dirty;
 
-        for (const renderer_common::Object& object : node->m_runtime.objects) {
-            submit(RenderObject { object, ctx.transform });
+        if (ctx.dirty) {
+            ctx.dirty = false;
+            node->m_world_transform = ctx.parent_world_transform * local_transform;
+        }
+
+        ctx.parent_world_transform = node->m_world_transform;
+
+        for (const renderer_common::Object& object : node->m_render_objects) {
+            submit(RenderObject { object, node->m_world_transform });
         }
     }
 
@@ -163,7 +169,7 @@ namespace hill::renderer {
         object.material->upload_data();
         object.vertex_array->bind();
 
-        object.material->m_program->upload_uniform_float16("u_transform", object.transform);
+        object.material->m_program->upload_uniform_float16("u_transform", object.world_transform);
 
         renderer_command::draw_elements_triangles(object.elements_count, object.elements_offset);
 
@@ -172,13 +178,13 @@ namespace hill::renderer {
     }
 
     void Renderer::configure(scene::ModelNode* node) {
-        node->m_runtime.objects.reserve(node->meshes_count());
+        node->m_render_objects.reserve(node->meshes_count());
 
         for (const auto& [i, mesh] : node->m_static.meshes | std::views::enumerate) {
-            renderer_common::Object& object = node->m_runtime.objects.emplace_back();
+            renderer_common::Object& object = node->m_render_objects.emplace_back();
             object.elements_count = int(mesh->indices.size());
             object.vertex_array = create_vertex_array(*mesh);
-            object.material = node->meshes[std::size_t(i)].material;
+            object.material = node->m_meshes[std::size_t(i)].material;
             object.material->m_program = get_program(*mesh);
         }
     }

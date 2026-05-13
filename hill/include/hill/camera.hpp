@@ -7,11 +7,15 @@ namespace hill::camera {
     public:
         void projection(int width, int height, float fov, float near, float far) {
             m_projection = glm::perspective(glm::radians(fov), float(width) / float(height), near, far);
+
+            m_projection_view_dirty = true;
         }
 
         void position_orientation(glm::vec3 position, glm::vec3 at, glm::vec3 up) {
             m_view = glm::lookAt(position, at, up);
             m_position = position;
+
+            m_projection_view_dirty = true;
         }
 
         void position_rotation(glm::vec3 position, glm::vec3 rotation) {
@@ -23,22 +27,29 @@ namespace hill::camera {
 
             m_view = glm::inverse(matrix);
             m_position = position;
-        }
 
-        void update_projection_view() {
-            m_projection_view = m_projection * m_view;
+            m_projection_view_dirty = true;
         }
 
         glm::vec3 position() const { return m_position; }
         const glm::mat4& view() const { return m_view; }
         const glm::mat4& projection() const { return m_projection; }
-        const glm::mat4& projection_view() const { return m_projection_view; }
+
+        const glm::mat4& projection_view() const {
+            if (m_projection_view_dirty) {
+                m_projection_view_dirty = false;
+                m_projection_view = m_projection * m_view;
+            }
+
+            return m_projection_view;
+        }
     private:
         glm::vec3 m_position {};
         glm::mat4 m_view = glm::identity<glm::mat4>();
         glm::mat4 m_projection = glm::identity<glm::mat4>();
 
         // Cached matrix
-        glm::mat4 m_projection_view = glm::identity<glm::mat4>();
+        mutable glm::mat4 m_projection_view = glm::identity<glm::mat4>();
+        mutable bool m_projection_view_dirty {};
     };
 }

@@ -20,11 +20,12 @@ namespace hill::editor {
 
 namespace hill::renderer {
     struct RenderObject : renderer_common::Object {
-        glm::mat4 transform = glm::identity<glm::mat4>();
+        glm::mat4 world_transform = glm::identity<glm::mat4>();
     };
 
     struct TraversalCtx {
-        glm::mat4 transform = glm::identity<glm::mat4>();
+        glm::mat4 parent_world_transform = glm::identity<glm::mat4>();
+        bool dirty {};
     };
 
     class Renderer {
@@ -66,7 +67,7 @@ namespace hill::renderer {
         int m_window_width {};
         int m_window_height {};
 
-        glm::vec3 m_background_color { 0.6f, 0.6f, 0.7f };
+        glm::vec3 m_background_color {0.6f, 0.6f, 0.7f};
 
         camera::Camera m_camera;
         light::DirectionalLight m_directional_light;

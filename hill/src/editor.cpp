@@ -247,12 +247,12 @@ namespace hill::editor {
         ImGui::SeparatorText("Mesh");
 
         if (input_text("Name", m_buffer_name, sizeof(m_buffer_name))) {
-            mesh->node->meshes[mesh->index].name = m_buffer_name;
+            mesh->node->m_meshes[mesh->index].name = m_buffer_name;
         }
 
         separator();
 
-        material_basic(dynamic_cast<material::MaterialBasic*>(mesh->node->meshes[mesh->index].material.get()));
+        material_basic(dynamic_cast<material::MaterialBasic*>(mesh->node->m_meshes[mesh->index].material.get()));
     }
 
     void Editor::nodes(scene::ModelNode* node) {
@@ -279,7 +279,7 @@ namespace hill::editor {
                 model_mesh.node = std::static_pointer_cast<scene::ModelNode>(node->shared_from_this());
                 model_mesh.index = i++;
 
-                set_inspectable(std::make_shared<ModelMesh>(model_mesh), model_mesh.node->meshes[model_mesh.index].name);
+                set_inspectable(std::make_shared<ModelMesh>(model_mesh), model_mesh.node->m_meshes[model_mesh.index].name);
             }
 
             if (open) {
@@ -312,14 +312,9 @@ namespace hill::editor {
             return;
         }
 
-        float transform[16] {};
+        float world_transform[16] {};
 
-        ImGuizmo::RecomposeMatrixFromComponents(
-            glm::value_ptr(model_node->translation),
-            glm::value_ptr(model_node->rotation),
-            glm::value_ptr(model_node->scale),
-            transform
-        );
+        std::memcpy(world_transform, glm::value_ptr(model_node->m_world_transform), sizeof(model_node->m_world_transform));
 
         m_gizmo.operation = ImGuizmo::OPERATION::TRANSLATE;
         m_gizmo.mode = ImGuizmo::MODE::WORLD;
@@ -332,20 +327,20 @@ namespace hill::editor {
             glm::value_ptr(renderer.m_camera.projection()),
             ImGuizmo::OPERATION(m_gizmo.operation),
             ImGuizmo::MODE(m_gizmo.mode),
-            transform,
+            world_transform,
             nullptr,
             nullptr
         );
 
-        float translation[3] {};
-        float rotation[3] {};
-        float scale[3] {};
+        // float translation[3] {};
+        // float rotation[3] {};
+        // float scale[3] {};
 
-        ImGuizmo::DecomposeMatrixToComponents(transform, translation, rotation, scale);
+        // ImGuizmo::DecomposeMatrixToComponents(world_transform, translation, rotation, scale);
 
-        model_node->translation = glm::vec3(translation[0], translation[1], translation[2]);
-        model_node->rotation = glm::vec3(rotation[0], rotation[1], rotation[2]);
-        model_node->scale = glm::vec3(scale[0], scale[1], scale[2]);
+        // model_node->translation = glm::vec3(translation[0], translation[1], translation[2]);
+        // model_node->rotation = glm::vec3(rotation[0], rotation[1], rotation[2]);
+        // model_node->scale = glm::vec3(scale[0], scale[1], scale[2]);
     }
 
     void Editor::set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name) {
