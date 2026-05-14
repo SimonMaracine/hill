@@ -5,8 +5,9 @@
 
 namespace hill::scene {
     void Node::add(std::shared_ptr<Node> child) {
-        const auto name = child->name();
-        m_children[std::string(name)] = std::move(child);
+        const auto name = child->m_name;
+        child->m_parent = weak_from_this();
+        m_children[name] = std::move(child);
     }
 
     void RootNode::renderer_process(renderer::Renderer& renderer, renderer::TraversalCtx& ctx) {
@@ -46,12 +47,12 @@ namespace hill::scene {
             throw error::Error("Invalid name");
         }
 
+        current_node->translation = node->translation;
+        current_node->rotation = glm::eulerAngles(node->rotation);
+        current_node->scale = node->scale;
         current_node->m_name = node->name;
         current_node->m_meshes = create_meshes(node->meshes, current_node->m_meshes_count);
-        current_node->m_static.local_translation = node->translation;
-        current_node->m_static.local_rotation = node->rotation;
-        current_node->m_static.local_scale = node->scale;
-        current_node->m_static.meshes.append_range(node->meshes);
+        current_node->m_static_meshes.append_range(node->meshes);
 
         for (const auto& child : node->children) {
             const auto child_node = std::make_shared<ModelNode>("");

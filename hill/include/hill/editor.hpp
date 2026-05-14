@@ -57,6 +57,7 @@ namespace hill::editor {
         void gizmo(renderer::Renderer& renderer);
 
         void set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name);
+        static glm::mat4 ancestor_world_transform(std::shared_ptr<scene::Node> node);
 
         struct Camera {
             glm::vec3 position {0.0f, 0.0f, 20.0f};

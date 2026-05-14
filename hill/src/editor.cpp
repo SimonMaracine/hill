@@ -6,6 +6,7 @@
 #include <imgui.h>
 #include <ImGuizmo.h>
 
+#include "glm/gtx/matrix_decompose.hpp"
 #include "hill/renderer.hpp"
 #include "hill/primitives_registry.hpp"
 #include "hill/scene.hpp"
@@ -34,6 +35,9 @@ namespace hill::editor {
     void Editor::initialize() {
         auto& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+        m_gizmo.operation = ImGuizmo::OPERATION::TRANSLATE;
+        m_gizmo.mode = ImGuizmo::MODE::WORLD;
     }
 
     void Editor::uninitialize() {
@@ -256,7 +260,7 @@ namespace hill::editor {
     }
 
     void Editor::nodes(scene::ModelNode* node) {
-        for (std::size_t i {}; const auto& mesh : node->m_static.meshes) {
+        for (std::size_t i {}; const auto& mesh : node->m_static_meshes) {
             static constexpr auto flags = ImGuiTreeNodeFlags_DrawLinesFull | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Leaf;
 
             const bool selected = [this, node, i] {
@@ -302,6 +306,14 @@ namespace hill::editor {
     }
 
     void Editor::gizmo(renderer::Renderer& renderer) {
+        if (ImGui::IsKeyPressed(ImGuiKey_1, false)) {
+            m_gizmo.operation = ImGuizmo::OPERATION::TRANSLATE;
+        } else if (ImGui::IsKeyPressed(ImGuiKey_2, false)) {
+            m_gizmo.operation = ImGuizmo::OPERATION::ROTATE;
+        } else if (ImGui::IsKeyPressed(ImGuiKey_3, false)) {
+            m_gizmo.operation = ImGuizmo::OPERATION::SCALE;
+        }
+
         if (!m_inspectable) {
             return;
         }
@@ -313,14 +325,12 @@ namespace hill::editor {
         }
 
         float world_transform[16] {};
+        std::memcpy(world_transform, glm::value_ptr(model_node->m_world_transform), sizeof(world_transform));
 
-        std::memcpy(world_transform, glm::value_ptr(model_node->m_world_transform), sizeof(model_node->m_world_transform));
-
-        m_gizmo.operation = ImGuizmo::OPERATION::TRANSLATE;
-        m_gizmo.mode = ImGuizmo::MODE::WORLD;
-
-        const ImGuiIO& io = ImGui::GetIO();
+        const auto& io = ImGui::GetIO();
         ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+
+        ImGuizmo::SetDrawlist(ImGui::GetBackgroundDrawList());
 
         (void) ImGuizmo::Manipulate(
             glm::value_ptr(renderer.m_camera.view()),
@@ -332,19 +342,58 @@ namespace hill::editor {
             nullptr
         );
 
+        if (!ImGuizmo::IsUsing()) {
+            return;
+        }
+
+        glm::mat4 world_transform2 {};
+        std::memcpy(glm::value_ptr(world_transform2), world_transform, sizeof(world_transform2));
+
+        const auto parent_world_transform = ancestor_world_transform(model_node);
+        const auto local_transform = glm::inverse(parent_world_transform) * world_transform2;
+
         // float translation[3] {};
         // float rotation[3] {};
         // float scale[3] {};
 
-        // ImGuizmo::DecomposeMatrixToComponents(world_transform, translation, rotation, scale);
+        // ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(local_transform), translation, rotation, scale);
 
-        // model_node->translation = glm::vec3(translation[0], translation[1], translation[2]);
-        // model_node->rotation = glm::vec3(rotation[0], rotation[1], rotation[2]);
-        // model_node->scale = glm::vec3(scale[0], scale[1], scale[2]);
+        glm::vec3 scale {};
+        glm::quat rotation {};
+        glm::vec3 translation {};
+        glm::vec3 _skew {};
+        glm::vec4 _perspective {};
+
+        if (!glm::decompose(local_transform, scale, rotation, translation, _skew, _perspective)) {
+            throw error::Error("Could not decompose transform");
+        }
+
+        model_node->translation = translation;
+        model_node->rotation = glm::degrees(glm::eulerAngles(rotation));
+        model_node->scale = scale;
     }
 
     void Editor::set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name) {
         m_inspectable = std::move(inspectable);
         std::strncpy(m_buffer_name, name.c_str(), sizeof(m_buffer_name) - 1);
+    }
+
+    glm::mat4 Editor::ancestor_world_transform(std::shared_ptr<scene::Node> node) {
+        while (true) {
+            const auto parent = node->m_parent.lock();
+
+            if (!parent) {
+                return glm::identity<glm::mat4>();
+            }
+
+            const auto node_model = std::dynamic_pointer_cast<scene::ModelNode>(parent);
+
+            if (!node_model) {
+                node = std::move(parent);
+                continue;
+            }
+
+            return node_model->m_world_transform;
+        }
     }
 }

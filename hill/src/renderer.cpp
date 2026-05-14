@@ -137,14 +137,12 @@ namespace hill::renderer {
             configure(node);
         }
 
-        const auto translation = node->m_static.local_translation + node->translation;
-        const auto rotation = node->m_static.local_rotation * glm::quat(glm::radians(node->rotation));
-        const auto scale = node->m_static.local_scale * node->scale;
-
         glm::mat4 local_transform = glm::identity<glm::mat4>();
-        local_transform = glm::translate(local_transform, translation);
-        local_transform *= glm::toMat4(rotation);
-        local_transform = glm::scale(local_transform, scale);
+        local_transform = glm::translate(local_transform, node->translation);
+        local_transform = glm::rotate(local_transform, glm::radians(node->rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+        local_transform = glm::rotate(local_transform, glm::radians(node->rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+        local_transform = glm::rotate(local_transform, glm::radians(node->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+        local_transform = glm::scale(local_transform, node->scale);
 
         ctx.dirty |= node->m_world_transform_dirty;
 
@@ -180,7 +178,7 @@ namespace hill::renderer {
     void Renderer::configure(scene::ModelNode* node) {
         node->m_render_objects.reserve(node->meshes_count());
 
-        for (const auto& [i, mesh] : node->m_static.meshes | std::views::enumerate) {
+        for (const auto& [i, mesh] : node->m_static_meshes | std::views::enumerate) {
             renderer_common::Object& object = node->m_render_objects.emplace_back();
             object.elements_count = int(mesh->indices.size());
             object.vertex_array = create_vertex_array(*mesh);

@@ -41,6 +41,7 @@ namespace hill::scene {
         void add(std::shared_ptr<Node> child);
     protected:
         std::string m_name;
+        std::weak_ptr<Node> m_parent;
         std::unordered_map<std::string, std::shared_ptr<Node>> m_children;
 
         friend class renderer::Renderer;
@@ -81,14 +82,7 @@ namespace hill::scene {
         static std::unique_ptr<renderer_common::Mesh[]> create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes, std::size_t& count);
         static std::shared_ptr<material::Material> create_material(const mesh::Mesh& mesh);
 
-        struct {
-            // glm::mat4 local_transform = glm::identity<glm::mat4>();
-            glm::vec3 local_translation {};
-            glm::quat local_rotation = glm::identity<glm::quat>();
-            glm::vec3 local_scale {1.0f};
-            std::vector<std::shared_ptr<mesh::Mesh>> meshes;
-        } m_static;
-
+        std::vector<std::shared_ptr<mesh::Mesh>> m_static_meshes;
         std::unique_ptr<renderer_common::Mesh[]> m_meshes;
         std::size_t m_meshes_count {};
         glm::mat4 m_world_transform = glm::identity<glm::mat4>();
