@@ -4,7 +4,6 @@
 #include <cstring>
 
 #include <imgui.h>
-#include <ImGuizmo.h>
 
 #include "hill/primitives/vertex_buffer.hpp"
 #include "hill/primitives/element_buffer.hpp"
@@ -93,7 +92,6 @@ namespace hill::renderer {
     void Renderer::imgui_render() const {
         m_imgui->begin();
         ImGui::NewFrame();
-        ImGuizmo::BeginFrame();
 
         m_imgui->update();
 
@@ -137,12 +135,9 @@ namespace hill::renderer {
             configure(node);
         }
 
-        glm::mat4 local_transform = glm::identity<glm::mat4>();
-        local_transform = glm::translate(local_transform, node->translation);
-        local_transform = glm::rotate(local_transform, glm::radians(node->rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-        local_transform = glm::rotate(local_transform, glm::radians(node->rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-        local_transform = glm::rotate(local_transform, glm::radians(node->rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-        local_transform = glm::scale(local_transform, node->scale);
+        const auto local_transform = glm::translate(glm::identity<glm::mat4>(), node->m_local.translation) *
+            glm::mat4_cast(node->m_local.rotation) *
+            glm::scale(glm::identity<glm::mat4>(), node->m_local.scale);
 
         ctx.dirty |= node->m_world_transform_dirty;
 

@@ -4,7 +4,6 @@
 #include <cstring>
 
 #include <imgui.h>
-#include <ImGuizmo.h>
 
 #include "glm/gtx/matrix_decompose.hpp"
 #include "hill/renderer.hpp"
@@ -35,9 +34,6 @@ namespace hill::editor {
     void Editor::initialize() {
         auto& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
-        m_gizmo.operation = ImGuizmo::OPERATION::TRANSLATE;
-        m_gizmo.mode = ImGuizmo::MODE::WORLD;
     }
 
     void Editor::uninitialize() {
@@ -54,7 +50,6 @@ namespace hill::editor {
         primitives_registry(renderer);
         scene_hierarchy(renderer);
         inspector(renderer);
-        gizmo(renderer);
     }
 
     void Editor::update_camera(renderer::Renderer& renderer, windowing_system::WindowingSystem& windowing_system) {
@@ -227,9 +222,17 @@ namespace hill::editor {
 
         separator();
 
-        ImGui::DragFloat3("Translation", glm::value_ptr(node->translation), 0.125f);
-        ImGui::DragFloat3("Rotation", glm::value_ptr(node->rotation), 1.0f);
-        ImGui::DragFloat3("Scale", glm::value_ptr(node->scale), 0.125f, 0.0f, 1000.0f);
+        auto translation = node->translation();
+        auto rotation = node->rotation();
+        auto scale = node->scale();
+
+        ImGui::DragFloat3("Translation", glm::value_ptr(translation), 0.125f);
+        ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 1.0f, -180.0f, 180.0f);
+        ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.125f, 0.0f, 1000.0f);
+
+        node->translation(translation);
+        node->rotation(rotation);
+        node->scale(scale);
     }
 
     void Editor::inspect(scene::DirectionalLightNode* node) {
@@ -303,74 +306,6 @@ namespace hill::editor {
         ImGui::DragFloat("Shininess", &material->shininess, 1.0f, 1.0f, 512.0f);
 
         return true;
-    }
-
-    void Editor::gizmo(renderer::Renderer& renderer) {
-        if (ImGui::IsKeyPressed(ImGuiKey_1, false)) {
-            m_gizmo.operation = ImGuizmo::OPERATION::TRANSLATE;
-        } else if (ImGui::IsKeyPressed(ImGuiKey_2, false)) {
-            m_gizmo.operation = ImGuizmo::OPERATION::ROTATE;
-        } else if (ImGui::IsKeyPressed(ImGuiKey_3, false)) {
-            m_gizmo.operation = ImGuizmo::OPERATION::SCALE;
-        }
-
-        if (!m_inspectable) {
-            return;
-        }
-
-        const auto model_node = std::dynamic_pointer_cast<scene::ModelNode>(m_inspectable);
-
-        if (!model_node) {
-            return;
-        }
-
-        float world_transform[16] {};
-        std::memcpy(world_transform, glm::value_ptr(model_node->m_world_transform), sizeof(world_transform));
-
-        const auto& io = ImGui::GetIO();
-        ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-
-        ImGuizmo::SetDrawlist(ImGui::GetBackgroundDrawList());
-
-        (void) ImGuizmo::Manipulate(
-            glm::value_ptr(renderer.m_camera.view()),
-            glm::value_ptr(renderer.m_camera.projection()),
-            ImGuizmo::OPERATION(m_gizmo.operation),
-            ImGuizmo::MODE(m_gizmo.mode),
-            world_transform,
-            nullptr,
-            nullptr
-        );
-
-        if (!ImGuizmo::IsUsing()) {
-            return;
-        }
-
-        glm::mat4 world_transform2 {};
-        std::memcpy(glm::value_ptr(world_transform2), world_transform, sizeof(world_transform2));
-
-        const auto parent_world_transform = ancestor_world_transform(model_node);
-        const auto local_transform = glm::inverse(parent_world_transform) * world_transform2;
-
-        // float translation[3] {};
-        // float rotation[3] {};
-        // float scale[3] {};
-
-        // ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(local_transform), translation, rotation, scale);
-
-        glm::vec3 scale {};
-        glm::quat rotation {};
-        glm::vec3 translation {};
-        glm::vec3 _skew {};
-        glm::vec4 _perspective {};
-
-        if (!glm::decompose(local_transform, scale, rotation, translation, _skew, _perspective)) {
-            throw error::Error("Could not decompose transform");
-        }
-
-        model_node->translation = translation;
-        model_node->rotation = glm::degrees(glm::eulerAngles(rotation));
-        model_node->scale = scale;
     }
 
     void Editor::set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name) {

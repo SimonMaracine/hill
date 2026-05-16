@@ -47,12 +47,12 @@ namespace hill::scene {
             throw error::Error("Invalid name");
         }
 
-        current_node->translation = node->translation;
-        current_node->rotation = glm::eulerAngles(node->rotation);
-        current_node->scale = node->scale;
         current_node->m_name = node->name;
-        current_node->m_meshes = create_meshes(node->meshes, current_node->m_meshes_count);
+        current_node->m_local.translation = node->translation;
+        current_node->m_local.rotation = node->rotation;
+        current_node->m_local.scale = node->scale;
         current_node->m_static_meshes.append_range(node->meshes);
+        current_node->m_meshes = create_meshes(node->meshes, current_node->m_meshes_count);
 
         for (const auto& child : node->children) {
             const auto child_node = std::make_shared<ModelNode>("");

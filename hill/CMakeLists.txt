@@ -4,7 +4,6 @@ include(cmake/assimp.cmake)
 include(cmake/glad.cmake)
 include(cmake/glm.cmake)
 include(cmake/imgui.cmake)
-include(cmake/imguizmo.cmake)
 include(cmake/stb_image.cmake)
 
 add_library(hill STATIC)
@@ -66,7 +65,7 @@ target_sources(
 )
 
 target_link_libraries(hill PRIVATE glad stb_image assimp::assimp)
-target_link_libraries(hill PUBLIC imgui imguizmo glm::glm)
+target_link_libraries(hill PUBLIC imgui glm::glm)
 
 set_target_cpp_mode(hill)
 set_target_warnings(hill)

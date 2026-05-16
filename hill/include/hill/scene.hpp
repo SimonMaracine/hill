@@ -70,9 +70,13 @@ namespace hill::scene {
         const renderer_common::Mesh* meshes() const { return m_meshes.get(); }
         std::size_t meshes_count() const { return m_meshes_count; }
 
-        glm::vec3 translation {};
-        glm::vec3 rotation {};
-        glm::vec3 scale {1.0f};
+        glm::vec3 translation() const { return m_local.translation; }
+        glm::vec3 rotation() const { return glm::degrees(glm::eulerAngles(m_local.rotation)); }
+        glm::vec3 scale() const { return m_local.scale; }
+
+        void translation(glm::vec3 translation) { m_local.translation = translation; }
+        void rotation(glm::vec3 rotation) { m_local.rotation = glm::quat(glm::radians(rotation)); }
+        void scale(glm::vec3 scale) { m_local.scale = scale; }
     private:
         struct TraversalCtx {
             std::weak_ptr<ModelNode> current_node;  // Used for propagation
@@ -81,6 +85,12 @@ namespace hill::scene {
         static void traverse(TraversalCtx& ctx, const model::Node* node);
         static std::unique_ptr<renderer_common::Mesh[]> create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes, std::size_t& count);
         static std::shared_ptr<material::Material> create_material(const mesh::Mesh& mesh);
+
+        struct {
+            glm::vec3 translation {};
+            glm::quat rotation = glm::identity<glm::quat>();
+            glm::vec3 scale {1.0f};
+        } m_local;
 
         std::vector<std::shared_ptr<mesh::Mesh>> m_static_meshes;
         std::unique_ptr<renderer_common::Mesh[]> m_meshes;

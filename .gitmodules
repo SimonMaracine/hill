@@ -11,6 +11,3 @@
 [submodule "hill/extern/assimp"]
 	path = hill/extern/assimp
 	url = https://github.com/assimp/assimp/
-[submodule "hill/extern/imguizmo"]
-	path = hill/extern/imguizmo
-	url = https://github.com/CedricGuillemet/ImGuizmo
