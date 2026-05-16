@@ -7,8 +7,6 @@ struct SDL_Window;
 
 class SdlExample : public hill::imgui::ImGui, public hill::windowing_system::WindowingSystem {
 public:
-
-
     SdlExample();
     ~SdlExample() override;
 
@@ -17,19 +15,19 @@ public:
     SdlExample(SdlExample&&) = delete;
     SdlExample& operator=(SdlExample&&) = delete;
 
-    void initialize() const override;
-    void uninitialize() const override;
-    void begin() const override;
-    void end(ImDrawData* draw_data) const override;
-    void update() override;
+    void imgui_initialize() const override;
+    void imgui_uninitialize() const override;
+    void imgui_begin() const override;
+    void imgui_end(ImDrawData* draw_data) const override;
+    void imgui_update() override;
 
-    void grab_mouse() const override;
-    void ungrab_mouse() const override;
+    void windowing_system_grab_mouse() const override;
+    void windowing_system_ungrab_mouse() const override;
 
     void run();
 private:
-    hill::renderer::Renderer m_renderer;
-    hill::editor::Editor m_editor;
+    std::unique_ptr<hill::renderer::Renderer> m_renderer;
+    std::unique_ptr<hill::editor::Editor> m_editor;
 
     SDL_Window* m_window {};
     void* m_context {};

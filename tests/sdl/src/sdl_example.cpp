@@ -19,8 +19,7 @@ static hill::configuration::Configuration make_configuration() {
     return config;
 }
 
-SdlExample::SdlExample()
-    : m_renderer(*this, make_configuration()) {
+SdlExample::SdlExample() {
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
         throw std::runtime_error(std::format("SDL_InitSubSystem: %s", SDL_GetError()));
     }
@@ -76,45 +75,51 @@ SdlExample::SdlExample()
     if (!SDL_SetWindowMinimumSize(m_window, 640, 360)) {
         std::println(stderr, "SDL_SetWindowMinimumSize: {}", SDL_GetError());
     }
+
+    m_renderer = std::make_unique<hill::renderer::Renderer>(*this, make_configuration());
+    m_editor = std::make_unique<hill::editor::Editor>(*this);
 }
 
 SdlExample::~SdlExample() {
+    m_editor.reset();
+    m_renderer.reset();
+
     SDL_GL_DestroyContext(static_cast<SDL_GLContext>(m_context));
     SDL_DestroyWindow(m_window);
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-void SdlExample::initialize() const {
+void SdlExample::imgui_initialize() const {
     ImGui_ImplSDL3_InitForOpenGL(m_window, m_context);
     ImGui_ImplOpenGL3_Init("#version 430 core");
 }
 
-void SdlExample::uninitialize() const {
+void SdlExample::imgui_uninitialize() const {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
 }
 
-void SdlExample::begin() const {
+void SdlExample::imgui_begin() const {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
 }
 
-void SdlExample::end(ImDrawData* draw_data) const {
+void SdlExample::imgui_end(ImDrawData* draw_data) const {
     ImGui_ImplOpenGL3_RenderDrawData(draw_data);
 }
 
-void SdlExample::update() {
-    m_editor.update(m_renderer);
-    m_editor.update_camera(m_renderer, *this);
+void SdlExample::imgui_update() {
+    m_editor->update(*m_renderer);
+    m_editor->update_camera(*m_renderer);
 }
 
-void SdlExample::grab_mouse() const {
+void SdlExample::windowing_system_grab_mouse() const {
     if (!SDL_SetWindowRelativeMouseMode(m_window, true)) {
         std::println(stderr, "SDL_SetWindowRelativeMouseMode: {}", SDL_GetError());
     }
 }
 
-void SdlExample::ungrab_mouse() const {
+void SdlExample::windowing_system_ungrab_mouse() const {
     if (!SDL_SetWindowRelativeMouseMode(m_window, false)) {
         std::println(stderr, "SDL_SetWindowRelativeMouseMode: {}", SDL_GetError());
     }
@@ -126,9 +131,6 @@ void SdlExample::run() {
     if (!SDL_ShowWindow(m_window)) {
         throw std::runtime_error(std::format("SDL_ShowWindow: %s", SDL_GetError()));
     }
-
-    m_renderer.initialize();
-    m_editor.initialize();
 
     hill::utility::Buffer buffer;
     hill::utility::read_file("assets/teapot.obj", buffer);
@@ -142,11 +144,11 @@ void SdlExample::run() {
     // m_renderer.root_node()->add(heart);
 
     auto cube = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/cube/cube.glb")));
-    m_renderer.root_node()->add(cube);
+    m_renderer->root_node()->add(cube);
 
     auto light = std::make_shared<hill::scene::DirectionalLightNode>("light");
     light->directional_light.direction = glm::normalize(glm::vec3(0.1f, -1.0f, 0.4f));
-    m_renderer.root_node()->add(light);
+    m_renderer->root_node()->add(light);
 
     while (m_running) {
         SDL_Event event;
@@ -162,22 +164,15 @@ void SdlExample::run() {
                     m_running = false;
                     break;
                 case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-                    m_renderer.window_resize(event.window.data1, event.window.data2);
+                    m_renderer->window_resize(event.window.data1, event.window.data2);
                     break;
             }
         }
 
-        m_renderer.render();
+        m_renderer->render();
 
         if (!SDL_GL_SwapWindow(m_window)) {
             throw std::runtime_error(std::format("SDL_GL_SwapWindow: %s", SDL_GetError()));
         }
     }
-
-    // teapot.reset();
-    // heart.reset();
-    cube.reset();
-
-    m_editor.uninitialize();
-    m_renderer.uninitialize();
 }

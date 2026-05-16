@@ -9,6 +9,7 @@ namespace hill::renderer_command {
 
     void clear(Buffers buffers);
     void draw_elements_triangles(int count, int offset = 0);
+    void draw_arrays_lines(int count);
 
     void clear_color(glm::vec4 color);
 

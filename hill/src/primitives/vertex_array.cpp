@@ -29,11 +29,11 @@ namespace hill::vertex_array {
 
     VertexArray::VertexArray() {
         glGenVertexArrays(1, &m_vertex_array);
-        primitives_registry::Registry::get().add_primitive(primitives_registry::Primitive::VertexArray, m_vertex_array);
+        primitives_registry::add_primitive(primitives_registry::Primitive::VertexArray, m_vertex_array);
     }
 
     VertexArray::~VertexArray() {
-        primitives_registry::Registry::get().remove_primitive(primitives_registry::Primitive::VertexArray, m_vertex_array);
+        primitives_registry::remove_primitive(primitives_registry::Primitive::VertexArray, m_vertex_array);
         glDeleteVertexArrays(1, &m_vertex_array);
     }
 

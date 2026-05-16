@@ -38,13 +38,13 @@ namespace hill::texture2d {
     Texture2D::Texture2D(Format format, int width, int height, bool mipmapping)
         : m_format(format), m_width(width), m_height(height), m_mipmapping(mipmapping) {
         glGenTextures(1, &m_texture);
-        primitives_registry::Registry::get().add_primitive(primitives_registry::Primitive::Texture2D, m_texture);
+        primitives_registry::add_primitive(primitives_registry::Primitive::Texture2D, m_texture);
 
         allocate_storage();
     }
 
     Texture2D::~Texture2D() {
-        primitives_registry::Registry::get().remove_primitive(primitives_registry::Primitive::Texture2D, m_texture);
+        primitives_registry::remove_primitive(primitives_registry::Primitive::Texture2D, m_texture);
         glDeleteTextures(1, &m_texture);
     }
 

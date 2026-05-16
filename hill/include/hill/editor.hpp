@@ -29,10 +29,16 @@ namespace hill::editor {
 
     class Editor {
     public:
-        void initialize();
-        void uninitialize();
+        explicit Editor(windowing_system::WindowingSystem& windowing_system);
+        ~Editor();
+
+        Editor(const Editor&) = delete;
+        Editor& operator=(const Editor&) = delete;
+        Editor(Editor&&) = delete;
+        Editor& operator=(Editor&&) = delete;
+
         void update(renderer::Renderer& renderer);
-        void update_camera(renderer::Renderer& renderer, windowing_system::WindowingSystem& windowing_system);
+        void update_camera(renderer::Renderer& renderer);
     private:
         void performance(renderer::Renderer& renderer);
 
@@ -54,16 +60,25 @@ namespace hill::editor {
 
         bool material_basic(material::MaterialBasic* material);
 
+        void world_origin(renderer::Renderer& renderer);
+        void world_grid(renderer::Renderer& renderer);
+
         void set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name);
         static glm::mat4 ancestor_world_transform(std::shared_ptr<scene::Node> node);
 
-        struct Camera {
-            glm::vec3 position {0.0f, 0.0f, 20.0f};
-            glm::vec3 front {0.0f, 0.0f, -1.0f};
-            static constexpr glm::vec3 up {0.0f, 1.0f, 0.0f};
+        windowing_system::WindowingSystem* m_windowing_system {};
 
-            float pitch {};
-            float yaw = -90.0f;
+        struct Camera {
+            static constexpr glm::vec3 UP {0.0f, 1.0f, 0.0f};
+            static constexpr glm::vec3 POSITION {0.0f, 3.0f, 30.0f};
+            static constexpr glm::vec3 FRONT {0.0f, 0.0f, -1.0f};
+            static constexpr float PITCH {};
+            static constexpr float YAW = -90.0f;
+
+            glm::vec3 position = POSITION;
+            glm::vec3 front = FRONT;
+            float pitch = PITCH;
+            float yaw = YAW;
             float move_speed_multiplier = 1.0f;
             bool control {};
         } m_camera;

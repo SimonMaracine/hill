@@ -7,11 +7,11 @@
 namespace hill::element_buffer {
     ElementBuffer::ElementBuffer() {
         glGenBuffers(1, &m_element_buffer);
-        primitives_registry::Registry::get().add_primitive(primitives_registry::Primitive::ElementBuffer, m_element_buffer);
+        primitives_registry::add_primitive(primitives_registry::Primitive::ElementBuffer, m_element_buffer);
     }
 
     ElementBuffer::~ElementBuffer() {
-        primitives_registry::Registry::get().remove_primitive(primitives_registry::Primitive::ElementBuffer, m_element_buffer);
+        primitives_registry::remove_primitive(primitives_registry::Primitive::ElementBuffer, m_element_buffer);
         glDeleteBuffers(1, &m_element_buffer);
     }
 

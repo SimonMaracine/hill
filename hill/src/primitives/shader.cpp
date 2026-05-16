@@ -27,11 +27,11 @@ namespace hill::shader {
             throw ShaderError("Could not create shader");
         }
 
-        primitives_registry::Registry::get().add_primitive(primitives_registry::Primitive::Shader, m_shader);
+        primitives_registry::add_primitive(primitives_registry::Primitive::Shader, m_shader);
     }
 
     Shader::~Shader() {
-        primitives_registry::Registry::get().remove_primitive(primitives_registry::Primitive::Shader, m_shader);
+        primitives_registry::remove_primitive(primitives_registry::Primitive::Shader, m_shader);
         glDeleteShader(m_shader);
     }
 
@@ -84,11 +84,11 @@ namespace hill::shader {
             throw ShaderError("Could not create program");
         }
 
-        primitives_registry::Registry::get().add_primitive(primitives_registry::Primitive::Program, m_program);
+        primitives_registry::add_primitive(primitives_registry::Primitive::Program, m_program);
     }
 
     Program::~Program() {
-        primitives_registry::Registry::get().remove_primitive(primitives_registry::Primitive::Program, m_program);
+        primitives_registry::remove_primitive(primitives_registry::Primitive::Program, m_program);
         glDeleteProgram(m_program);
     }
 

@@ -1,31 +1,23 @@
 #include "hill/primitives_registry.hpp"
 
-#include <memory>
+#include <unordered_map>
 
 namespace hill::primitives_registry {
-    static std::unique_ptr<Registry> g_instance;
+    static std::unordered_map<Primitive, Container> g_primitives;
 
-    void Registry::initialize() {
-        g_instance = std::make_unique<Registry>();
+    void uninitialize() {
+        g_primitives.clear();
     }
 
-    void Registry::uninitialize() {
-        g_instance.reset();
+    const Container& primitives(Primitive primitive) {
+        return g_primitives[primitive];
     }
 
-    Registry& Registry::get() {
-        return *g_instance;
+    void add_primitive(Primitive primitive, unsigned int id) {
+        g_primitives[primitive].insert(id);
     }
 
-    const Registry::Container& Registry::primitives(Primitive primitive) {
-        return m_primitives[primitive];
-    }
-
-    void Registry::add_primitive(Primitive primitive, unsigned int id) {
-        m_primitives[primitive].insert(id);
-    }
-
-    void Registry::remove_primitive(Primitive primitive, unsigned int id) {
-        m_primitives[primitive].erase(id);
+    void remove_primitive(Primitive primitive, unsigned int id) {
+        g_primitives[primitive].erase(id);
     }
 }

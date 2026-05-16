@@ -41,6 +41,7 @@ target_sources(
             "include/hill/primitives/texture2d.hpp"
             "include/hill/primitives/vertex_array.hpp"
             "include/hill/primitives/vertex_buffer.hpp"
+            "include/hill/aabb.hpp"
             "include/hill/camera.hpp"
             "include/hill/configuration.hpp"
             "include/hill/debug.hpp"

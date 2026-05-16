@@ -14,19 +14,14 @@
 #include "hill/utility.hpp"
 
 namespace hill::renderer {
-    Renderer::Renderer(imgui::ImGui& imgui)
-        : m_imgui(&imgui) {}
-
     Renderer::Renderer(imgui::ImGui& imgui, const configuration::Configuration& configuration)
-        : m_imgui(&imgui), m_configuration(configuration) {}
-
-    void Renderer::initialize() {
+        : m_imgui(&imgui), m_configuration(configuration) {
         if (m_configuration.debug_output && graphics_api::debug_context()) {
             debug::initialize(*m_configuration.debug_output);
         }
 
+        debug_initialize();
         imgui_initialize();
-        primitives_registry::Registry::initialize();
 
         renderer_command::enable_depth_test();
 
@@ -34,11 +29,9 @@ namespace hill::renderer {
         m_performance.last_time = std::chrono::high_resolution_clock::now();
     }
 
-    void Renderer::uninitialize() {
-        m_root_node.reset();
-
-        primitives_registry::Registry::uninitialize();
+    Renderer::~Renderer() {
         imgui_uninitialize();
+        primitives_registry::uninitialize();
     }
 
     void Renderer::render() {
@@ -75,6 +68,7 @@ namespace hill::renderer {
         render_traverse_tree(ctx, m_root_node.get());
         render_end();
 
+        debug_render();
         imgui_render();
     }
 
@@ -83,26 +77,106 @@ namespace hill::renderer {
         m_window_height = height;
     }
 
+    void Renderer::add_debug_line(glm::vec3 p1, glm::vec3 p2, glm::vec3 color) {
+        m_debug_renderer.lines.emplace_back(p1, p2, color);
+    }
+
+    void Renderer::add_debug_aabb(const aabb::Aabb& aabb, glm::vec3 color) {
+
+    }
+
     void Renderer::imgui_initialize() const {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        m_imgui->initialize();
+        m_imgui->imgui_initialize();
     }
 
     void Renderer::imgui_uninitialize() const {
-        m_imgui->uninitialize();
+        m_imgui->imgui_uninitialize();
         ImGui::DestroyContext();
     }
 
     void Renderer::imgui_render() const {
-        m_imgui->begin();
+        m_imgui->imgui_begin();
         ImGui::NewFrame();
 
-        m_imgui->update();
+        m_imgui->imgui_update();
 
         ImGui::EndFrame();
         ImGui::Render();
-        m_imgui->end(ImGui::GetDrawData());
+        m_imgui->imgui_end(ImGui::GetDrawData());
+    }
+
+    void Renderer::debug_initialize() {
+        {
+            auto vertex_buffer = std::make_shared<vertex_buffer::VertexBuffer>();
+            m_debug_renderer.weak_vertex_buffer = vertex_buffer;
+
+            vertex_array::Layout layout;
+            layout.attribute(vertex_array::Attribute(0, 3, vertex_array::Type::Float, false, (3 + 3) * sizeof(float), 0));
+            layout.attribute(vertex_array::Attribute(1, 3, vertex_array::Type::Float, false, (3 + 3) * sizeof(float), 3 * sizeof(float)));
+
+            m_debug_renderer.vertex_array = std::make_shared<vertex_array::VertexArray>();
+            m_debug_renderer.vertex_array->bind();
+            m_debug_renderer.vertex_array->configure(std::move(vertex_buffer), layout);
+            m_debug_renderer.vertex_array->unbind();
+        }
+
+        {
+            std::string vertex_shader_source;
+            std::string fragment_shader_source;
+
+            utility::read_file("shaders/debug.vert", vertex_shader_source);
+            utility::read_file("shaders/debug.frag", fragment_shader_source);
+
+            auto vertex_shader = std::make_shared<shader::Shader>(shader::ShaderType::Vertex);
+            vertex_shader->compile(vertex_shader_source);
+
+            auto fragment_shader = std::make_shared<shader::Shader>(shader::ShaderType::Fragment);
+            fragment_shader->compile(fragment_shader_source);
+
+            m_debug_renderer.program = std::make_shared<shader::Program>();
+            m_debug_renderer.program->attach_shader(std::move(vertex_shader));
+            m_debug_renderer.program->attach_shader(std::move(fragment_shader));
+            m_debug_renderer.program->link();
+        }
+    }
+
+    void Renderer::debug_render() {
+        if (m_debug_renderer.lines.empty()) {
+            return;
+        }
+
+        struct Vertex {
+            glm::vec3 position {};
+            glm::vec3 color {};
+        };
+
+        std::vector<Vertex> vertices;
+
+        for (const DebugRenderer::Line& line : m_debug_renderer.lines) {
+            vertices.push_back({ line.p1, line.color });
+            vertices.push_back({ line.p2, line.color });
+        }
+
+        if (const auto vertex_buffer = m_debug_renderer.weak_vertex_buffer.lock(); vertex_buffer) {
+            vertex_buffer->bind();
+            vertex_buffer->upload_data(vertices.data(), vertices.size() * sizeof(decltype(vertices)::value_type), common::BufferUsage::StreamDraw);
+            vertex_buffer->unbind();
+        }
+
+        m_debug_renderer.program->use();
+        m_debug_renderer.vertex_array->bind();
+
+        m_debug_renderer.program->upload_uniform_float16("u_projection_view", m_camera.projection_view());
+
+        renderer_command::draw_arrays_lines(int(vertices.size()));
+        m_performance.draw_calls++;
+
+        m_debug_renderer.vertex_array->unbind();
+        m_debug_renderer.program->unuse();
+
+        m_debug_renderer.lines.clear();
     }
 
     void Renderer::submit(const RenderObject& object) {
@@ -201,12 +275,12 @@ namespace hill::renderer {
             i += sizeof(vertex.normal);
         }
 
-        const auto vertex_buffer = std::make_shared<vertex_buffer::VertexBuffer>();
+        auto vertex_buffer = std::make_shared<vertex_buffer::VertexBuffer>();
         vertex_buffer->bind();
         vertex_buffer->upload_data(vertices.get(), vertices_size);
         vertex_buffer->unbind();
 
-        const auto element_buffer = std::make_shared<element_buffer::ElementBuffer>();
+        auto element_buffer = std::make_shared<element_buffer::ElementBuffer>();
         element_buffer->bind();
         element_buffer->upload_data(mesh.indices.data(), mesh.indices.size() * sizeof(unsigned int));
         element_buffer->unbind();
@@ -217,8 +291,8 @@ namespace hill::renderer {
 
         const auto vertex_array = std::make_shared<vertex_array::VertexArray>();
         vertex_array->bind();
-        vertex_array->configure(vertex_buffer, layout);
-        vertex_array->configure_and_unbind(element_buffer);
+        vertex_array->configure(std::move(vertex_buffer), layout);
+        vertex_array->configure_and_unbind(std::move(element_buffer));
 
         return vertex_array;
     }
@@ -234,15 +308,15 @@ namespace hill::renderer {
                 break;
         }
 
-        const auto vertex_shader = std::make_shared<shader::Shader>(shader::ShaderType::Vertex);
+        auto vertex_shader = std::make_shared<shader::Shader>(shader::ShaderType::Vertex);
         vertex_shader->compile(vertex_shader_source);
 
-        const auto fragment_shader = std::make_shared<shader::Shader>(shader::ShaderType::Fragment);
+        auto fragment_shader = std::make_shared<shader::Shader>(shader::ShaderType::Fragment);
         fragment_shader->compile(fragment_shader_source);
 
         const auto program = std::make_shared<shader::Program>();
-        program->attach_shader(vertex_shader);
-        program->attach_shader(fragment_shader);
+        program->attach_shader(std::move(vertex_shader));
+        program->attach_shader(std::move(fragment_shader));
         program->link();
 
         m_programs[shader_feature_set] = program;

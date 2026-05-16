@@ -10,7 +10,7 @@ namespace hill::windowing_system {
         WindowingSystem(WindowingSystem&&) = default;
         WindowingSystem& operator=(WindowingSystem&&) = default;
 
-        virtual void grab_mouse() const = 0;
-        virtual void ungrab_mouse() const = 0;
+        virtual void windowing_system_grab_mouse() const = 0;
+        virtual void windowing_system_ungrab_mouse() const = 0;
     };
 }

@@ -31,13 +31,14 @@ namespace hill::editor {
         editor.inspect(this);
     }
 
-    void Editor::initialize() {
+    Editor::Editor(windowing_system::WindowingSystem& windowing_system)
+        : m_windowing_system(&windowing_system) {
         auto& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     }
 
-    void Editor::uninitialize() {
-        m_inspectable.reset();
+    Editor::~Editor() {
+        // FIXME anything?
     }
 
     void Editor::update(renderer::Renderer& renderer) {
@@ -50,20 +51,22 @@ namespace hill::editor {
         primitives_registry(renderer);
         scene_hierarchy(renderer);
         inspector(renderer);
+        world_origin(renderer);
+        world_grid(renderer);
     }
 
-    void Editor::update_camera(renderer::Renderer& renderer, windowing_system::WindowingSystem& windowing_system) {
+    void Editor::update_camera(renderer::Renderer& renderer) {
         static constexpr float MOVE_SPEED = 10.0f;
         static constexpr float LOOK_SPEED = 7.0f;
 
         if (!ImGui::GetIO().WantCaptureMouse) {
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-                windowing_system.grab_mouse();
+                m_windowing_system->windowing_system_grab_mouse();
                 m_camera.control = true;
             }
 
             if (ImGui::IsMouseReleased(ImGuiMouseButton_Right)) {
-                windowing_system.ungrab_mouse();
+                m_windowing_system->windowing_system_ungrab_mouse();
                 m_camera.control = false;
             }
 
@@ -95,23 +98,30 @@ namespace hill::editor {
             }
 
             if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_A)) {
-                position_offset -= glm::normalize(glm::cross(m_camera.front, m_camera.up));
+                position_offset -= glm::normalize(glm::cross(m_camera.front, m_camera.UP));
             }
 
             if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_D)) {
-                position_offset += glm::normalize(glm::cross(m_camera.front, m_camera.up));
+                position_offset += glm::normalize(glm::cross(m_camera.front, m_camera.UP));
             }
 
             if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_E)) {
-                position_offset += m_camera.up;
+                position_offset += m_camera.UP;
             }
 
             if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_Q)) {
-                position_offset -= m_camera.up;
+                position_offset -= m_camera.UP;
             }
 
             if (glm::length(position_offset) > 0.0f) {
                 m_camera.position += glm::normalize(position_offset) * MOVE_SPEED * m_camera.move_speed_multiplier * ImGui::GetIO().DeltaTime;
+            }
+
+            if (ImGui::IsKeyDown(ImGuiKey_Home)) {
+                m_camera.position = m_camera.POSITION;
+                m_camera.front = m_camera.FRONT;
+                m_camera.pitch = m_camera.PITCH;
+                m_camera.yaw = m_camera.YAW;
             }
         }
 
@@ -121,7 +131,7 @@ namespace hill::editor {
         direction.z = glm::sin(glm::radians(m_camera.yaw)) * glm::cos(glm::radians(m_camera.pitch));
         m_camera.front = glm::normalize(direction);
 
-        renderer.m_camera.position_orientation(m_camera.position, m_camera.position + m_camera.front, m_camera.up);
+        renderer.m_camera.position_orientation(m_camera.position, m_camera.position + m_camera.front, m_camera.UP);
     }
 
     void Editor::performance(renderer::Renderer& renderer) {
@@ -144,12 +154,12 @@ namespace hill::editor {
 
     void Editor::primitives_registry(renderer::Renderer&) {
         if (ImGui::Begin("Primitives Registry")) {
-            primitives_object("Vertex Buffers", primitives_registry::Registry::get().primitives(primitives_registry::Primitive::VertexBuffer));
-            primitives_object("Element Buffers", primitives_registry::Registry::get().primitives(primitives_registry::Primitive::ElementBuffer));
-            primitives_object("Vertex Arrays", primitives_registry::Registry::get().primitives(primitives_registry::Primitive::VertexArray));
-            primitives_object("Shaders", primitives_registry::Registry::get().primitives(primitives_registry::Primitive::Shader));
-            primitives_object("Programs", primitives_registry::Registry::get().primitives(primitives_registry::Primitive::Program));
-            primitives_object("Textures 2D", primitives_registry::Registry::get().primitives(primitives_registry::Primitive::Texture2D));
+            primitives_object("Vertex Buffers", primitives_registry::primitives(primitives_registry::Primitive::VertexBuffer));
+            primitives_object("Element Buffers", primitives_registry::primitives(primitives_registry::Primitive::ElementBuffer));
+            primitives_object("Vertex Arrays", primitives_registry::primitives(primitives_registry::Primitive::VertexArray));
+            primitives_object("Shaders", primitives_registry::primitives(primitives_registry::Primitive::Shader));
+            primitives_object("Programs", primitives_registry::primitives(primitives_registry::Primitive::Program));
+            primitives_object("Textures 2D", primitives_registry::primitives(primitives_registry::Primitive::Texture2D));
         }
 
         ImGui::End();
@@ -314,6 +324,66 @@ namespace hill::editor {
         ImGui::DragFloat("Shininess", &material->shininess, 1.0f, 1.0f, 512.0f);
 
         return true;
+    }
+
+    void Editor::world_origin(renderer::Renderer& renderer) {
+        const float far = 100.0f;  // TODO
+
+        renderer.add_debug_line(
+            glm::vec3(-far, 0.0f, 0.0f),
+            glm::vec3(far, 0.0f, 0.0f),
+            glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)
+        );
+
+        renderer.add_debug_line(
+            glm::vec3(0.0f, -far, 0.0f),
+            glm::vec3(0.0f, far, 0.0f),
+            glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)
+        );
+
+        renderer.add_debug_line(
+            glm::vec3(0.0f, 0.0f, -far),
+            glm::vec3(0.0f, 0.0f, far),
+            glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)
+        );
+    }
+
+    void Editor::world_grid(renderer::Renderer& renderer) {
+        static constexpr float CELL_SIZE = 1.0f;
+
+        const float far = 100.0f;  // TODO
+
+        for (float x {}; x < far; x += CELL_SIZE) {
+            renderer.add_debug_line(
+                glm::vec3(x + CELL_SIZE / 2.0f, 0.0f, -far),
+                glm::vec3(x + CELL_SIZE / 2.0f, 0.0f, far),
+                glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)
+            );
+        }
+
+        for (float x {}; x < far; x += CELL_SIZE) {
+            renderer.add_debug_line(
+                glm::vec3(-x - CELL_SIZE / 2.0f, 0.0f, -far),
+                glm::vec3(-x - CELL_SIZE / 2.0f, 0.0f, far),
+                glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)
+            );
+        }
+
+        for (float z {}; z < far; z += CELL_SIZE) {
+            renderer.add_debug_line(
+                glm::vec3(-far, 0.0f, z + CELL_SIZE / 2.0f),
+                glm::vec3(far, 0.0f, z + CELL_SIZE / 2.0f),
+                glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)
+            );
+        }
+
+        for (float z {}; z < far; z += CELL_SIZE) {
+            renderer.add_debug_line(
+                glm::vec3(-far, 0.0f, -z - CELL_SIZE / 2.0f),
+                glm::vec3(far, 0.0f, -z - CELL_SIZE / 2.0f),
+                glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)
+            );
+        }
     }
 
     void Editor::set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name) {

@@ -12,6 +12,7 @@
 #include "hill/light.hpp"
 #include "hill/material.hpp"
 #include "hill/renderer_common.hpp"
+#include "hill/aabb.hpp"
 #include "hill/glm.h++"
 
 namespace hill::editor {
@@ -30,19 +31,28 @@ namespace hill::renderer {
 
     class Renderer {
     public:
-        explicit Renderer(imgui::ImGui& imgui);
-        Renderer(imgui::ImGui& imgui, const configuration::Configuration& configuration);
+        explicit Renderer(imgui::ImGui& imgui, const configuration::Configuration& configuration = {});
+        ~Renderer();
 
-        void initialize();
-        void uninitialize();
+        Renderer(const Renderer&) = delete;
+        Renderer& operator=(const Renderer&) = delete;
+        Renderer(Renderer&&) = delete;
+        Renderer& operator=(Renderer&&) = delete;
+
         void render();
         void window_resize(int width, int height);
 
         scene::RootNode* root_node() const { return m_root_node.get(); }
+
+        void add_debug_line(glm::vec3 p1, glm::vec3 p2, glm::vec3 color = glm::vec3(1.0f));
+        void add_debug_aabb(const aabb::Aabb& aabb, glm::vec3 color = glm::vec3(1.0f));
     private:
         void imgui_initialize() const;
         void imgui_uninitialize() const;
         void imgui_render() const;
+
+        void debug_initialize();
+        void debug_render();
 
         void submit(const RenderObject& object);
 
@@ -76,6 +86,20 @@ namespace hill::renderer {
 
         std::vector<RenderObject> m_objects;
         std::unordered_map<renderer_common::ShaderFeatureSet, std::weak_ptr<shader::Program>> m_programs;
+
+        struct DebugRenderer {
+            struct Line {
+                glm::vec3 p1 {};
+                glm::vec3 p2 {};
+                glm::vec3 color {};
+            };
+
+            std::vector<Line> lines;
+
+            std::shared_ptr<vertex_array::VertexArray> vertex_array;
+            std::weak_ptr<vertex_buffer::VertexBuffer> weak_vertex_buffer;
+            std::shared_ptr<shader::Program> program;
+        } m_debug_renderer;
 
         mutable struct {
             std::chrono::high_resolution_clock::time_point last_time {};

@@ -39,6 +39,12 @@ namespace hill::renderer_command {
         glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, reinterpret_cast<void*>(std::size_t(offset) * sizeof(unsigned int)));
     }
 
+    void draw_arrays_lines(int count) {
+        assert(count > 0);
+
+        glDrawArrays(GL_LINES, 0, count);
+    }
+
     void clear_color(glm::vec4 color) {
         glClearColor(color.r, color.g, color.b, color.a);
     }
