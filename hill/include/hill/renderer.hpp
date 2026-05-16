@@ -77,8 +77,12 @@ namespace hill::renderer {
         std::vector<RenderObject> m_objects;
         std::unordered_map<renderer_common::ShaderFeatureSet, std::weak_ptr<shader::Program>> m_programs;
 
-        std::chrono::high_resolution_clock::time_point m_last_time {};
-        std::chrono::duration<double> m_frame_time {};
+        mutable struct {
+            std::chrono::high_resolution_clock::time_point last_time {};
+            std::chrono::duration<double> frame_time {};
+            unsigned int draw_calls {};
+            unsigned int transform_updates {};
+        } m_performance;
 
         friend class editor::Editor;
         friend class scene::RootNode;

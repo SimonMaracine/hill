@@ -31,7 +31,7 @@ namespace hill::renderer {
         renderer_command::enable_depth_test();
 
         m_root_node = std::make_shared<scene::RootNode>();
-        m_last_time = std::chrono::high_resolution_clock::now();
+        m_performance.last_time = std::chrono::high_resolution_clock::now();
     }
 
     void Renderer::uninitialize() {
@@ -42,9 +42,14 @@ namespace hill::renderer {
     }
 
     void Renderer::render() {
-        const auto current_time = std::chrono::high_resolution_clock::now();
-        m_frame_time = current_time - m_last_time;
-        m_last_time = current_time;
+        {
+            const auto current_time = std::chrono::high_resolution_clock::now();
+            m_performance.frame_time = current_time - m_performance.last_time;
+            m_performance.last_time = current_time;
+
+            m_performance.draw_calls = 0;
+            m_performance.transform_updates = 0;
+        }
 
         m_camera.projection(m_window_width, m_window_height, 45.0f, 0.01f, 100.0f);
         renderer_command::viewport(m_window_width, m_window_height);
@@ -135,15 +140,17 @@ namespace hill::renderer {
             configure(node);
         }
 
-        const auto local_transform = glm::translate(glm::identity<glm::mat4>(), node->m_local.translation) *
+        const auto local_transform =
+            glm::translate(glm::identity<glm::mat4>(), node->m_local.translation) *
             glm::mat4_cast(node->m_local.rotation) *
             glm::scale(glm::identity<glm::mat4>(), node->m_local.scale);
 
         ctx.dirty |= node->m_world_transform_dirty;
 
         if (ctx.dirty) {
-            ctx.dirty = false;
+            node->m_world_transform_dirty = false;
             node->m_world_transform = ctx.parent_world_transform * local_transform;
+            m_performance.transform_updates++;
         }
 
         ctx.parent_world_transform = node->m_world_transform;
@@ -165,6 +172,7 @@ namespace hill::renderer {
         object.material->m_program->upload_uniform_float16("u_transform", object.world_transform);
 
         renderer_command::draw_elements_triangles(object.elements_count, object.elements_offset);
+        m_performance.draw_calls++;
 
         object.vertex_array->unbind();
         object.material->m_program->unuse();

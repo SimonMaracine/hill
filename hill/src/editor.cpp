@@ -59,13 +59,15 @@ namespace hill::editor {
         if (!ImGui::GetIO().WantCaptureMouse) {
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
                 windowing_system.grab_mouse();
+                m_camera.control = true;
             }
 
             if (ImGui::IsMouseReleased(ImGuiMouseButton_Right)) {
                 windowing_system.ungrab_mouse();
+                m_camera.control = false;
             }
 
-            if (ImGui::IsMouseDragging(ImGuiMouseButton_Right)) {
+            if (m_camera.control && ImGui::IsMouseDragging(ImGuiMouseButton_Right)) {
                 const ImVec2 delta = ImGui::GetIO().MouseDelta;
                 m_camera.yaw += delta.x * LOOK_SPEED * ImGui::GetIO().DeltaTime;
                 m_camera.pitch += -delta.y * LOOK_SPEED * ImGui::GetIO().DeltaTime;
@@ -76,7 +78,7 @@ namespace hill::editor {
         m_camera.pitch = glm::max(m_camera.pitch, -89.0f);
 
         if (!ImGui::GetIO().WantCaptureKeyboard) {
-            if (ImGui::IsKeyDown(ImGuiKey_LeftShift)) {
+            if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_LeftShift)) {
                 m_camera.move_speed_multiplier = 5.0f;
             } else {
                 m_camera.move_speed_multiplier = 1.0f;
@@ -84,27 +86,27 @@ namespace hill::editor {
 
             glm::vec3 position_offset {};
 
-            if (ImGui::IsKeyDown(ImGuiKey_W)) {
+            if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_W)) {
                 position_offset += m_camera.front;
             }
 
-            if (ImGui::IsKeyDown(ImGuiKey_S)) {
+            if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_S)) {
                 position_offset -= m_camera.front;
             }
 
-            if (ImGui::IsKeyDown(ImGuiKey_A)) {
+            if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_A)) {
                 position_offset -= glm::normalize(glm::cross(m_camera.front, m_camera.up));
             }
 
-            if (ImGui::IsKeyDown(ImGuiKey_D)) {
+            if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_D)) {
                 position_offset += glm::normalize(glm::cross(m_camera.front, m_camera.up));
             }
 
-            if (ImGui::IsKeyDown(ImGuiKey_E)) {
+            if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_E)) {
                 position_offset += m_camera.up;
             }
 
-            if (ImGui::IsKeyDown(ImGuiKey_Q)) {
+            if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_Q)) {
                 position_offset -= m_camera.up;
             }
 
@@ -124,7 +126,9 @@ namespace hill::editor {
 
     void Editor::performance(renderer::Renderer& renderer) {
         if (ImGui::Begin("Performance")) {
-            ImGui::Text("Frame Time: %.02f", renderer.m_frame_time.count() * 1000.0);
+            ImGui::Text("Frame Time: %.02f", renderer.m_performance.frame_time.count() * 1000.0);
+            ImGui::Text("Draw Calls: %u", renderer.m_performance.draw_calls);
+            ImGui::Text("Transform Updates: %u", renderer.m_performance.transform_updates);
         }
 
         ImGui::End();
@@ -226,13 +230,17 @@ namespace hill::editor {
         auto rotation = node->rotation();
         auto scale = node->scale();
 
-        ImGui::DragFloat3("Translation", glm::value_ptr(translation), 0.125f);
-        ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 1.0f, -180.0f, 180.0f);
-        ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.125f, 0.0f, 1000.0f);
+        if (ImGui::DragFloat3("Translation", glm::value_ptr(translation), 0.125f)) {
+            node->translation(translation);
+        }
 
-        node->translation(translation);
-        node->rotation(rotation);
-        node->scale(scale);
+        if (ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 1.0f, -180.0f, 180.0f)) {
+            node->rotation(rotation);
+        }
+
+        if (ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.125f, 0.0f, 1000.0f)) {
+            node->scale(scale);
+        }
     }
 
     void Editor::inspect(scene::DirectionalLightNode* node) {

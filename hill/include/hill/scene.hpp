@@ -74,9 +74,9 @@ namespace hill::scene {
         glm::vec3 rotation() const { return glm::degrees(glm::eulerAngles(m_local.rotation)); }
         glm::vec3 scale() const { return m_local.scale; }
 
-        void translation(glm::vec3 translation) { m_local.translation = translation; }
-        void rotation(glm::vec3 rotation) { m_local.rotation = glm::quat(glm::radians(rotation)); }
-        void scale(glm::vec3 scale) { m_local.scale = scale; }
+        void translation(glm::vec3 translation) { m_local.translation = translation; m_world_transform_dirty = true; }
+        void rotation(glm::vec3 rotation) { m_local.rotation = glm::quat(glm::radians(rotation)); m_world_transform_dirty = true; }
+        void scale(glm::vec3 scale) { m_local.scale = scale; m_world_transform_dirty = true; }
     private:
         struct TraversalCtx {
             std::weak_ptr<ModelNode> current_node;  // Used for propagation
