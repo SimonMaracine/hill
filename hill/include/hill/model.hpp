@@ -21,7 +21,6 @@ namespace hill::model {
 
         std::string name;
         std::vector<std::shared_ptr<mesh::Mesh>> meshes;
-        // glm::mat4 transform = glm::identity<glm::mat4>();
         glm::vec3 translation {};
         glm::quat rotation = glm::identity<glm::quat>();
         glm::vec3 scale {1.0f};

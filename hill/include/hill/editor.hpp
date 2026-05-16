@@ -6,6 +6,7 @@
 #include "hill/editor_common.hpp"
 #include "hill/windowing_system.hpp"
 #include "hill/material.hpp"
+#include "hill/aabb.hpp"
 #include "hill/glm.h++"
 
 namespace hill::renderer {
@@ -62,6 +63,11 @@ namespace hill::editor {
 
         void world_origin(renderer::Renderer& renderer);
         void world_grid(renderer::Renderer& renderer);
+        void world_bounding_box(renderer::Renderer& renderer);
+
+        bool bounding_box(renderer::Renderer& renderer, ModelMesh* mesh);
+        bool bounding_box(renderer::Renderer& renderer, scene::ModelNode* node);
+        void bounding_box(scene::ModelNode* node, std::vector<aabb::Aabb>& bounding_boxes);
 
         void set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name);
         static glm::mat4 ancestor_world_transform(std::shared_ptr<scene::Node> node);

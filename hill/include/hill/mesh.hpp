@@ -4,6 +4,7 @@
 #include <vector>
 #include <filesystem>
 
+#include "hill/aabb.hpp"
 #include "hill/glm.h++"
 
 namespace hill::mesh {
@@ -46,6 +47,7 @@ namespace hill::mesh {
         std::vector<unsigned int> indices;
         std::vector<Texture> textures;
         Material material;
+        aabb::Aabb aabb;
         unsigned int vertex_attributes {};
     };
 }

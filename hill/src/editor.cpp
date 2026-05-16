@@ -1,11 +1,11 @@
 #include "hill/editor.hpp"
 
 #include <ranges>
+#include <limits>
 #include <cstring>
 
 #include <imgui.h>
 
-#include "glm/gtx/matrix_decompose.hpp"
 #include "hill/renderer.hpp"
 #include "hill/primitives_registry.hpp"
 #include "hill/scene.hpp"
@@ -53,6 +53,7 @@ namespace hill::editor {
         inspector(renderer);
         world_origin(renderer);
         world_grid(renderer);
+        world_bounding_box(renderer);
     }
 
     void Editor::update_camera(renderer::Renderer& renderer) {
@@ -188,7 +189,7 @@ namespace hill::editor {
 
         path += node->name().data() + "/"s;
 
-        static constexpr auto flags = ImGuiTreeNodeFlags_DrawLinesFull | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+        static constexpr auto flags = ImGuiTreeNodeFlags_DrawLinesFull | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen;
         const bool selected = m_inspectable == node->shared_from_this();
 
         const bool open = ImGui::TreeNodeEx(
@@ -277,12 +278,13 @@ namespace hill::editor {
 
         separator();
 
-        material_basic(dynamic_cast<material::MaterialBasic*>(mesh->node->m_meshes[mesh->index].material.get()));
+        material_basic(std::dynamic_pointer_cast<material::MaterialBasic>(mesh->node->m_meshes[mesh->index].material).get());
     }
 
     void Editor::nodes(scene::ModelNode* node) {
-        for (std::size_t i {}; const auto& mesh : node->m_static_meshes) {
-            static constexpr auto flags = ImGuiTreeNodeFlags_DrawLinesFull | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Leaf;
+        for (std::size_t i {}; const auto& mesh : node->m_meshes) {
+            static constexpr auto flags =
+                ImGuiTreeNodeFlags_DrawLinesFull | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Leaf;
 
             const bool selected = [this, node, i] {
                 const auto inspectable = std::dynamic_pointer_cast<ModelMesh>(m_inspectable);
@@ -295,7 +297,7 @@ namespace hill::editor {
             }();
 
             const bool open = ImGui::TreeNodeEx(
-                mesh->name.c_str(),
+                mesh.name.c_str(),
                 flags | (selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None)
             );
 
@@ -383,6 +385,61 @@ namespace hill::editor {
                 glm::vec3(far, 0.0f, -z - CELL_SIZE / 2.0f),
                 glm::vec4(0.5f, 0.5f, 0.5f, 1.0f)
             );
+        }
+    }
+
+    void Editor::world_bounding_box(renderer::Renderer& renderer) {
+        if (!m_inspectable) {
+            return;
+        }
+
+        bounding_box(renderer, std::dynamic_pointer_cast<ModelMesh>(m_inspectable).get()) ||
+        bounding_box(renderer, std::dynamic_pointer_cast<scene::ModelNode>(m_inspectable).get());
+    }
+
+    bool Editor::bounding_box(renderer::Renderer& renderer, ModelMesh* mesh) {
+        if (!mesh) {
+            return false;
+        }
+
+        renderer.add_debug_aabb(mesh->node->m_meshes[mesh->index].aabb, mesh->node->m_world_transform);
+
+        return true;
+    }
+
+    bool Editor::bounding_box(renderer::Renderer& renderer, scene::ModelNode* node) {
+        if (!node) {
+            return false;
+        }
+
+        std::vector<aabb::Aabb> bounding_boxes;
+        bounding_box(node, bounding_boxes);
+
+        aabb::Aabb aabb;
+        aabb.min = glm::vec3(std::numeric_limits<float>::infinity());
+        aabb.max = glm::vec3(-std::numeric_limits<float>::infinity());
+
+        for (const auto& bounding_box : bounding_boxes) {
+            aabb.min = glm::min(aabb.min, bounding_box.min);
+            aabb.max = glm::max(aabb.max, bounding_box.max);
+        }
+
+        renderer.add_debug_aabb(aabb, node->m_world_transform);
+
+        return true;
+    }
+
+    void Editor::bounding_box(scene::ModelNode* node, std::vector<aabb::Aabb>& bounding_boxes) {
+        for (const scene::Mesh& mesh : node->m_meshes) {
+            bounding_boxes.push_back(mesh.aabb);
+        }
+
+        for (const auto& child : node->m_children | std::views::values) {
+            const auto model_node = std::dynamic_pointer_cast<scene::ModelNode>(child);
+
+            if (model_node) {
+                bounding_box(model_node.get(), bounding_boxes);
+            }
         }
     }
 

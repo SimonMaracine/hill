@@ -46,6 +46,7 @@ namespace hill::renderer {
 
         void add_debug_line(glm::vec3 p1, glm::vec3 p2, glm::vec3 color = glm::vec3(1.0f));
         void add_debug_aabb(const aabb::Aabb& aabb, glm::vec3 color = glm::vec3(1.0f));
+        void add_debug_aabb(const aabb::Aabb& aabb, const glm::mat4& transform, glm::vec3 color = glm::vec3(1.0f));
     private:
         void imgui_initialize() const;
         void imgui_uninitialize() const;

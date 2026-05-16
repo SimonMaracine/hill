@@ -51,8 +51,8 @@ namespace hill::scene {
         current_node->m_local.translation = node->translation;
         current_node->m_local.rotation = node->rotation;
         current_node->m_local.scale = node->scale;
-        current_node->m_static_meshes.append_range(node->meshes);
-        current_node->m_meshes = create_meshes(node->meshes, current_node->m_meshes_count);
+        current_node->m_raw_meshes.append_range(node->meshes);
+        current_node->m_meshes = create_meshes(node->meshes);
 
         for (const auto& child : node->children) {
             const auto child_node = std::make_shared<ModelNode>("");
@@ -63,14 +63,15 @@ namespace hill::scene {
         }
     }
 
-    std::unique_ptr<renderer_common::Mesh[]> ModelNode::create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes, std::size_t& count) {
-        count = meshes.size();
-        auto result_meshes = std::make_unique<renderer_common::Mesh[]>(meshes.size());
+    std::vector<Mesh> ModelNode::create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes) {
+        std::vector<Mesh> result_meshes;
+        result_meshes.reserve(meshes.size());
 
-        for (std::size_t i {}; const auto& mesh : meshes) {
-            auto& [name, material] = result_meshes[i++];
+        for (const auto& mesh : meshes) {
+            auto& [name, material, aabb] = result_meshes.emplace_back();
             name = mesh->name;
             material = create_material(*mesh);
+            aabb = mesh->aabb;
         }
 
         return result_meshes;

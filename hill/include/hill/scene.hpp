@@ -56,6 +56,12 @@ namespace hill::scene {
         friend class renderer::Renderer;
     };
 
+    struct Mesh {
+        std::string name;
+        std::shared_ptr<material::Material> material;
+        aabb::Aabb aabb;
+    };
+
     class ModelNode : public Node {
     public:
         explicit ModelNode(std::string name)
@@ -67,8 +73,8 @@ namespace hill::scene {
 
         static std::shared_ptr<ModelNode> from_model(const model::Model& model);
 
-        const renderer_common::Mesh* meshes() const { return m_meshes.get(); }
-        std::size_t meshes_count() const { return m_meshes_count; }
+        const Mesh* meshes() const { return m_meshes.data(); }
+        std::size_t meshes_count() const { return m_meshes.size(); }
 
         glm::vec3 translation() const { return m_local.translation; }
         glm::vec3 rotation() const { return glm::degrees(glm::eulerAngles(m_local.rotation)); }
@@ -83,7 +89,7 @@ namespace hill::scene {
         };
 
         static void traverse(TraversalCtx& ctx, const model::Node* node);
-        static std::unique_ptr<renderer_common::Mesh[]> create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes, std::size_t& count);
+        static std::vector<Mesh> create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes);
         static std::shared_ptr<material::Material> create_material(const mesh::Mesh& mesh);
 
         struct {
@@ -92,11 +98,10 @@ namespace hill::scene {
             glm::vec3 scale {1.0f};
         } m_local;
 
-        std::vector<std::shared_ptr<mesh::Mesh>> m_static_meshes;
-        std::unique_ptr<renderer_common::Mesh[]> m_meshes;
-        std::size_t m_meshes_count {};
-        glm::mat4 m_world_transform = glm::identity<glm::mat4>();
+        std::vector<std::shared_ptr<mesh::Mesh>> m_raw_meshes;
+        std::vector<Mesh> m_meshes;
         std::vector<renderer_common::Object> m_render_objects;
+        glm::mat4 m_world_transform = glm::identity<glm::mat4>();
         bool m_render_objects_dirty = true;
         bool m_world_transform_dirty = true;
 
