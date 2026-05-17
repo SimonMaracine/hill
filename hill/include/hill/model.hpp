@@ -29,7 +29,9 @@ namespace hill::model {
     struct TraversalCtx {
         std::weak_ptr<Node> current_node;  // Used for propagation
         std::weak_ptr<Node> parent_node;
+
         std::unordered_map<const aiMesh*, std::shared_ptr<mesh::Mesh>> processed_meshes;
+        std::unordered_map<std::string, std::shared_ptr<image::Image>> processed_textures;
     };
 
     class Model {
@@ -40,7 +42,7 @@ namespace hill::model {
         const Node* root() const { return m_root.get(); }
     private:
         void process_node(const aiNode* node, const aiScene* scene, TraversalCtx& ctx);
-        mesh::Mesh process_mesh(const aiMesh* mesh, const aiScene* scene);
+        static mesh::Mesh process_mesh(const aiMesh* mesh, const aiScene* scene, TraversalCtx& ctx);
 
         std::shared_ptr<Node> m_root;
     };

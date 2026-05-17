@@ -6,9 +6,21 @@
 
 namespace hill::image {
     Image::Image(const utility::Buffer& buffer) {
+        load(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size());
+    }
+
+    Image::Image(const unsigned char* data, std::size_t size) {
+        load(data, size);
+    }
+
+    Image::~Image() {
+        stbi_image_free(m_data);
+    }
+
+    void Image::load(const unsigned char* data, std::size_t size) {
         m_data = stbi_load_from_memory(
-            reinterpret_cast<const unsigned char*>(buffer.data()),
-            int (buffer.size()),
+            data,
+            int(size),
             &m_width,
             &m_height,
             &m_channels,
@@ -18,10 +30,6 @@ namespace hill::image {
         if (!m_data) {
             throw ImageError("Could not load image");
         }
-    }
-
-    Image::~Image() {
-        stbi_image_free(m_data);
     }
 
     Image::Image(Image&& other) noexcept

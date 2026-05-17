@@ -2,9 +2,10 @@
 
 #include <string>
 #include <vector>
-#include <filesystem>
+#include <memory>
 
 #include "hill/aabb.hpp"
+#include "hill/image.hpp"
 #include "hill/glm.h++"
 
 namespace hill::mesh {
@@ -19,33 +20,25 @@ namespace hill::mesh {
         glm::vec3 position {};
         glm::vec3 normal {};
         glm::vec4 color {};
-        glm::vec2 uv {};
-    };
-
-    enum class TextureType {
-        Albedo,
-        Metallic,
-        Normal
-    };
-
-    struct Texture {  // TODO image
-        TextureType type {};
-        std::filesystem::path path;
+        glm::vec2 texture_coordinate {};
     };
 
     struct Material {
         std::string name;
+
         glm::vec3 color_ambient {0.6f};
         glm::vec3 color_diffuse {0.6f};
         glm::vec3 color_specular {0.6f};
         float shininess = 32.0f;
+
+        std::shared_ptr<image::Image> texture_diffuse;
+        std::shared_ptr<image::Image> texture_specular;
     };
 
     struct Mesh {
         std::string name;
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
-        std::vector<Texture> textures;
         Material material;
         aabb::Aabb aabb;
         unsigned int vertex_attributes {};

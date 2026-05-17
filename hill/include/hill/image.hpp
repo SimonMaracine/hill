@@ -6,7 +6,9 @@
 namespace hill::image {
     class Image {
     public:
+        Image() = default;
         explicit Image(const utility::Buffer& buffer);
+        Image(const unsigned char* data, std::size_t size);
         ~Image();
 
         Image(const Image&) = delete;
@@ -18,7 +20,11 @@ namespace hill::image {
         int height() const { return m_height; }
         int channels() const { return m_channels; }
         unsigned char* data() const { return m_data; }
+
+        operator bool() const { return m_data; }
     private:
+        void load(const unsigned char* data, std::size_t size);
+
         int m_width {};
         int m_height {};
         int m_channels {};

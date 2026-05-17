@@ -2,25 +2,13 @@
 
 #include <format>
 #include <utility>
+#include <cstring>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
 namespace hill::model {
-    static constexpr mesh::TextureType texture_type_enum(aiTextureType texture_type) {
-        switch (texture_type) {
-            case aiTextureType_DIFFUSE:
-                return mesh::TextureType::Albedo;
-            case aiTextureType_SPECULAR:
-                return mesh::TextureType::Metallic;
-            case aiTextureType_NORMALS:
-                return mesh::TextureType::Normal;
-            default:
-                std::unreachable();
-        }
-    }
-
     static aabb::Aabb aabb(const aiAABB& aabb) {
         return {
             .min = glm::vec3(aabb.mMin.x, aabb.mMin.y, aabb.mMin.z),
@@ -28,21 +16,44 @@ namespace hill::model {
         };
     }
 
-    static std::vector<mesh::Texture> load_material_textures(const aiMaterial* material, aiTextureType texture_type) {
-        std::vector<mesh::Texture> textures;
-
-        for (unsigned int i {}; i < material->GetTextureCount(texture_type); i++) {
-            aiString path;
-            material->GetTexture(texture_type, i, &path);
-
-            mesh::Texture texture;
-            texture.path = path.C_Str();
-            texture.type = texture_type_enum(texture_type);
-
-            textures.push_back(std::move(texture));
+    static std::shared_ptr<image::Image> load_material_texture(const aiMaterial* material, const aiScene* scene, aiTextureType texture_type, TraversalCtx& ctx) {
+        if (material->GetTextureCount(texture_type) == 0) {
+            return nullptr;
         }
 
-        return textures;
+        aiString path;
+        material->GetTexture(texture_type, 0, &path);
+
+        if (const auto iter = ctx.processed_textures.find(path.C_Str()); iter != ctx.processed_textures.end()) {
+            return iter->second;
+        }
+
+        const aiTexture* texture = scene->GetEmbeddedTexture(path.C_Str());
+
+        if (texture) {
+            const bool encoded = texture->mHeight == 0;
+
+            if (encoded) {
+                utility::Buffer buffer;
+                buffer.resize(texture->mWidth);
+                std::memcpy(buffer.data(), texture->pcData, texture->mWidth);
+
+                auto result_texture = std::make_shared<image::Image>(buffer);
+                ctx.processed_textures[path.C_Str()] = result_texture;
+
+                return result_texture;
+            }
+
+            throw ModelError("Raw image loading not implemented");
+        }
+
+        utility::Buffer buffer;
+        utility::read_file(std::filesystem::path(path.C_Str()), buffer);
+
+        auto result_texture = std::make_shared<image::Image>(buffer);
+        ctx.processed_textures[path.C_Str()] = result_texture;
+
+        return result_texture;
     }
 
     static mesh::Material load_material_properties(const aiMaterial* material) {
@@ -141,7 +152,7 @@ namespace hill::model {
                 continue;
             }
 
-            current_node->meshes.push_back(std::make_shared<mesh::Mesh>(process_mesh(mesh, scene)));
+            current_node->meshes.push_back(std::make_shared<mesh::Mesh>(process_mesh(mesh, scene, ctx)));
         }
 
         for (unsigned int i {}; i < node->mNumChildren; i++) {
@@ -151,7 +162,7 @@ namespace hill::model {
         }
     }
 
-    mesh::Mesh Model::process_mesh(const aiMesh* mesh, const aiScene* scene) {
+    mesh::Mesh Model::process_mesh(const aiMesh* mesh, const aiScene* scene, TraversalCtx& ctx) {
         mesh::Mesh result_mesh;
 
         result_mesh.name = mesh->mName.C_Str();
@@ -194,8 +205,8 @@ namespace hill::model {
             }
 
             if (mesh->HasTextureCoords(0)) {
-                vertex.uv.x = mesh->mTextureCoords[0][i].x;
-                vertex.uv.y = mesh->mTextureCoords[0][i].y;
+                vertex.texture_coordinate.x = mesh->mTextureCoords[0][i].x;
+                vertex.texture_coordinate.y = mesh->mTextureCoords[0][i].y;
             }
 
             result_mesh.vertices.push_back(vertex);
@@ -218,9 +229,10 @@ namespace hill::model {
         // Load the material even if it was already loaded before because of sharing, doesn't hurt much
         result_mesh.material = load_material_properties(material);
 
-        result_mesh.textures.append_range(load_material_textures(material, aiTextureType_DIFFUSE));
-        result_mesh.textures.append_range(load_material_textures(material, aiTextureType_SPECULAR));
-        result_mesh.textures.append_range(load_material_textures(material, aiTextureType_NORMALS));
+        // Handle shared textures, however
+        result_mesh.material.texture_diffuse = load_material_texture(material, scene, aiTextureType_DIFFUSE, ctx);
+        result_mesh.material.texture_specular = load_material_texture(material, scene, aiTextureType_SPECULAR, ctx);
+        // result_mesh.material.texture_diffuse = load_material_texture(material, scene, aiTextureType_NORMALS, ctx);
 
         return result_mesh;
     }
