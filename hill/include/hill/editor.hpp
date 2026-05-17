@@ -67,7 +67,7 @@ namespace hill::editor {
 
         bool bounding_box(renderer::Renderer& renderer, ModelMesh* mesh);
         bool bounding_box(renderer::Renderer& renderer, scene::ModelNode* node);
-        void bounding_box(scene::ModelNode* node, std::vector<aabb::Aabb>& bounding_boxes);
+        void bounding_box(scene::ModelNode* node, aabb::Aabb& aabb);
 
         void set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name);
         static glm::mat4 ancestor_world_transform(std::shared_ptr<scene::Node> node);

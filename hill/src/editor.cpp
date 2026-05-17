@@ -412,33 +412,70 @@ namespace hill::editor {
             return false;
         }
 
-        std::vector<aabb::Aabb> bounding_boxes;
-        bounding_box(node, bounding_boxes);
-
         aabb::Aabb aabb;
-        aabb.min = glm::vec3(std::numeric_limits<float>::infinity());
-        aabb.max = glm::vec3(-std::numeric_limits<float>::infinity());
-
-        for (const auto& bounding_box : bounding_boxes) {
-            aabb.min = glm::min(aabb.min, bounding_box.min);
-            aabb.max = glm::max(aabb.max, bounding_box.max);
-        }
+        bounding_box(node, aabb);
 
         renderer.add_debug_aabb(aabb, node->m_world_transform);
 
         return true;
     }
 
-    void Editor::bounding_box(scene::ModelNode* node, std::vector<aabb::Aabb>& bounding_boxes) {
-        for (const scene::Mesh& mesh : node->m_meshes) {
-            bounding_boxes.push_back(mesh.aabb);
+    void Editor::bounding_box(scene::ModelNode* node, aabb::Aabb& aabb) {
+        {
+            std::vector<aabb::Aabb> bounding_boxes;
+
+            for (const scene::Mesh& mesh : node->m_meshes) {
+                bounding_boxes.push_back(mesh.aabb);
+            }
+
+            aabb.min = glm::vec3(std::numeric_limits<float>::infinity());
+            aabb.max = glm::vec3(-std::numeric_limits<float>::infinity());
+
+            for (const auto& bounding_box : bounding_boxes) {
+                aabb.min = glm::min(aabb.min, bounding_box.min);
+                aabb.max = glm::max(aabb.max, bounding_box.max);
+            }
         }
 
         for (const auto& child : node->m_children | std::views::values) {
             const auto model_node = std::dynamic_pointer_cast<scene::ModelNode>(child);
 
             if (model_node) {
-                bounding_box(model_node.get(), bounding_boxes);
+                aabb::Aabb child_aabb;
+
+                bounding_box(model_node.get(), child_aabb);
+
+                const auto local_transform =
+                    glm::translate(glm::identity<glm::mat4>(), model_node->m_local.translation) *
+                    glm::mat4_cast(model_node->m_local.rotation) *
+                    glm::scale(glm::identity<glm::mat4>(), model_node->m_local.scale);
+
+                const glm::vec3 child_min = local_transform * glm::vec4(child_aabb.min, 1.0f);
+                const glm::vec3 child_max = local_transform * glm::vec4(child_aabb.max, 1.0f);
+                const glm::vec3 child_min_x = local_transform * glm::vec4(child_aabb.max.x, child_aabb.min.y, child_aabb.min.z, 1.0f);
+                const glm::vec3 child_min_y = local_transform * glm::vec4(child_aabb.min.x, child_aabb.max.y, child_aabb.min.z, 1.0f);
+                const glm::vec3 child_min_z = local_transform * glm::vec4(child_aabb.min.x, child_aabb.min.y, child_aabb.max.z, 1.0f);
+                const glm::vec3 child_max_x = local_transform * glm::vec4(child_aabb.min.x, child_aabb.max.y, child_aabb.max.z, 1.0f);
+                const glm::vec3 child_max_y = local_transform * glm::vec4(child_aabb.max.x, child_aabb.min.y, child_aabb.max.z, 1.0f);
+                const glm::vec3 child_max_z = local_transform * glm::vec4(child_aabb.max.x, child_aabb.max.y, child_aabb.min.z, 1.0f);
+
+                aabb.min = glm::min(aabb.min, child_min);
+                aabb.min = glm::min(aabb.min, child_min_x);
+                aabb.min = glm::min(aabb.min, child_min_y);
+                aabb.min = glm::min(aabb.min, child_min_z);
+                aabb.min = glm::min(aabb.min, child_max);
+                aabb.min = glm::min(aabb.min, child_max_x);
+                aabb.min = glm::min(aabb.min, child_max_y);
+                aabb.min = glm::min(aabb.min, child_max_z);
+
+                aabb.max = glm::max(aabb.max, child_max);
+                aabb.max = glm::max(aabb.max, child_max_x);
+                aabb.max = glm::max(aabb.max, child_max_y);
+                aabb.max = glm::max(aabb.max, child_max_z);
+                aabb.max = glm::max(aabb.max, child_min);
+                aabb.max = glm::max(aabb.max, child_min_x);
+                aabb.max = glm::max(aabb.max, child_min_y);
+                aabb.max = glm::max(aabb.max, child_min_z);
             }
         }
     }

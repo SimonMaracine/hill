@@ -86,20 +86,20 @@ namespace hill::renderer {
         const float size_y = aabb.max.y - aabb.min.y;
         const float size_z = aabb.max.z - aabb.min.z;
 
-        m_debug_renderer.lines.emplace_back(glm::vec3(aabb.min) + glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(aabb.min) + glm::vec3(size_x, 0.0f, 0.0f), color);
-        m_debug_renderer.lines.emplace_back(glm::vec3(aabb.min) + glm::vec3(0.0f, 0.0f, size_z), glm::vec3(aabb.min) + glm::vec3(size_x, 0.0f, size_z), color);
-        m_debug_renderer.lines.emplace_back(glm::vec3(aabb.min) + glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(aabb.min) + glm::vec3(0.0f, 0.0f, size_z), color);
-        m_debug_renderer.lines.emplace_back(glm::vec3(aabb.min) + glm::vec3(size_x, 0.0f, 0.0f), glm::vec3(aabb.min) + glm::vec3(size_x, 0.0f, size_z), color);
+        m_debug_renderer.lines.emplace_back(aabb.min + glm::vec3(0.0f, 0.0f, 0.0f), aabb.min + glm::vec3(size_x, 0.0f, 0.0f), color);
+        m_debug_renderer.lines.emplace_back(aabb.min + glm::vec3(0.0f, 0.0f, size_z), aabb.min + glm::vec3(size_x, 0.0f, size_z), color);
+        m_debug_renderer.lines.emplace_back(aabb.min + glm::vec3(0.0f, 0.0f, 0.0f), aabb.min + glm::vec3(0.0f, 0.0f, size_z), color);
+        m_debug_renderer.lines.emplace_back(aabb.min + glm::vec3(size_x, 0.0f, 0.0f), aabb.min + glm::vec3(size_x, 0.0f, size_z), color);
 
-        m_debug_renderer.lines.emplace_back(glm::vec3(aabb.min) + glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(aabb.min) + glm::vec3(0.0f, size_y, 0.0f), color);
-        m_debug_renderer.lines.emplace_back(glm::vec3(aabb.min) + glm::vec3(size_x, 0.0f, 0.0f), glm::vec3(aabb.min) + glm::vec3(size_x, size_y, 0.0f), color);
-        m_debug_renderer.lines.emplace_back(glm::vec3(aabb.min) + glm::vec3(0.0f, 0.0f, size_z), glm::vec3(aabb.min) + glm::vec3(0.0f, size_y, size_z), color);
-        m_debug_renderer.lines.emplace_back(glm::vec3(aabb.min) + glm::vec3(size_x, 0.0f, size_z), glm::vec3(aabb.min) + glm::vec3(size_x, size_y, size_z), color);
+        m_debug_renderer.lines.emplace_back(aabb.min + glm::vec3(0.0f, 0.0f, 0.0f), aabb.min + glm::vec3(0.0f, size_y, 0.0f), color);
+        m_debug_renderer.lines.emplace_back(aabb.min + glm::vec3(size_x, 0.0f, 0.0f), aabb.min + glm::vec3(size_x, size_y, 0.0f), color);
+        m_debug_renderer.lines.emplace_back(aabb.min + glm::vec3(0.0f, 0.0f, size_z), aabb.min + glm::vec3(0.0f, size_y, size_z), color);
+        m_debug_renderer.lines.emplace_back(aabb.min + glm::vec3(size_x, 0.0f, size_z), aabb.min + glm::vec3(size_x, size_y, size_z), color);
 
-        m_debug_renderer.lines.emplace_back(glm::vec3(aabb.min) + glm::vec3(0.0f, size_y, 0.0f), glm::vec3(aabb.min) + glm::vec3(size_x, size_y, 0.0f), color);
-        m_debug_renderer.lines.emplace_back(glm::vec3(aabb.min) + glm::vec3(0.0f, size_y, size_z), glm::vec3(aabb.min) + glm::vec3(size_x, size_y, size_z), color);
-        m_debug_renderer.lines.emplace_back(glm::vec3(aabb.min) + glm::vec3(0.0f, size_y, 0.0f), glm::vec3(aabb.min) + glm::vec3(0.0f, size_y, size_z), color);
-        m_debug_renderer.lines.emplace_back(glm::vec3(aabb.min) + glm::vec3(size_x, size_y, 0.0f), glm::vec3(aabb.min) + glm::vec3(size_x, size_y, size_z), color);
+        m_debug_renderer.lines.emplace_back(aabb.min + glm::vec3(0.0f, size_y, 0.0f), aabb.min + glm::vec3(size_x, size_y, 0.0f), color);
+        m_debug_renderer.lines.emplace_back(aabb.min + glm::vec3(0.0f, size_y, size_z), aabb.min + glm::vec3(size_x, size_y, size_z), color);
+        m_debug_renderer.lines.emplace_back(aabb.min + glm::vec3(0.0f, size_y, 0.0f), aabb.min + glm::vec3(0.0f, size_y, size_z), color);
+        m_debug_renderer.lines.emplace_back(aabb.min + glm::vec3(size_x, size_y, 0.0f), aabb.min + glm::vec3(size_x, size_y, size_z), color);
     }
 
     void Renderer::add_debug_aabb(const aabb::Aabb& aabb, const glm::mat4& transform, glm::vec3 color) {
@@ -107,20 +107,20 @@ namespace hill::renderer {
         const float size_y = aabb.max.y - aabb.min.y;
         const float size_z = aabb.max.z - aabb.min.z;
 
-        m_debug_renderer.lines.emplace_back(transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(0.0f, 0.0f, 0.0f), 1.0f), transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(size_x, 0.0f, 0.0f), 1.0f), color);
-        m_debug_renderer.lines.emplace_back(transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(0.0f, 0.0f, size_z), 1.0f), transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(size_x, 0.0f, size_z), 1.0f), color);
-        m_debug_renderer.lines.emplace_back(transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(0.0f, 0.0f, 0.0f), 1.0f), transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(0.0f, 0.0f, size_z), 1.0f), color);
-        m_debug_renderer.lines.emplace_back(transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(size_x, 0.0f, 0.0f), 1.0f), transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(size_x, 0.0f, size_z), 1.0f), color);
+        m_debug_renderer.lines.emplace_back(transform * glm::vec4(aabb.min + glm::vec3(0.0f, 0.0f, 0.0f), 1.0f), transform * glm::vec4(aabb.min + glm::vec3(size_x, 0.0f, 0.0f), 1.0f), color);
+        m_debug_renderer.lines.emplace_back(transform * glm::vec4(aabb.min + glm::vec3(0.0f, 0.0f, size_z), 1.0f), transform * glm::vec4(aabb.min + glm::vec3(size_x, 0.0f, size_z), 1.0f), color);
+        m_debug_renderer.lines.emplace_back(transform * glm::vec4(aabb.min + glm::vec3(0.0f, 0.0f, 0.0f), 1.0f), transform * glm::vec4(aabb.min + glm::vec3(0.0f, 0.0f, size_z), 1.0f), color);
+        m_debug_renderer.lines.emplace_back(transform * glm::vec4(aabb.min + glm::vec3(size_x, 0.0f, 0.0f), 1.0f), transform * glm::vec4(aabb.min + glm::vec3(size_x, 0.0f, size_z), 1.0f), color);
 
-        m_debug_renderer.lines.emplace_back(transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(0.0f, 0.0f, 0.0f), 1.0f), transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(0.0f, size_y, 0.0f), 1.0f), color);
-        m_debug_renderer.lines.emplace_back(transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(size_x, 0.0f, 0.0f), 1.0f), transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(size_x, size_y, 0.0f), 1.0f), color);
-        m_debug_renderer.lines.emplace_back(transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(0.0f, 0.0f, size_z), 1.0f), transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(0.0f, size_y, size_z), 1.0f), color);
-        m_debug_renderer.lines.emplace_back(transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(size_x, 0.0f, size_z), 1.0f), transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(size_x, size_y, size_z), 1.0f), color);
+        m_debug_renderer.lines.emplace_back(transform * glm::vec4(aabb.min + glm::vec3(0.0f, 0.0f, 0.0f), 1.0f), transform * glm::vec4(aabb.min + glm::vec3(0.0f, size_y, 0.0f), 1.0f), color);
+        m_debug_renderer.lines.emplace_back(transform * glm::vec4(aabb.min + glm::vec3(size_x, 0.0f, 0.0f), 1.0f), transform * glm::vec4(aabb.min + glm::vec3(size_x, size_y, 0.0f), 1.0f), color);
+        m_debug_renderer.lines.emplace_back(transform * glm::vec4(aabb.min + glm::vec3(0.0f, 0.0f, size_z), 1.0f), transform * glm::vec4(aabb.min + glm::vec3(0.0f, size_y, size_z), 1.0f), color);
+        m_debug_renderer.lines.emplace_back(transform * glm::vec4(aabb.min + glm::vec3(size_x, 0.0f, size_z), 1.0f), transform * glm::vec4(aabb.min + glm::vec3(size_x, size_y, size_z), 1.0f), color);
 
-        m_debug_renderer.lines.emplace_back(transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(0.0f, size_y, 0.0f), 1.0f), transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(size_x, size_y, 0.0f), 1.0f), color);
-        m_debug_renderer.lines.emplace_back(transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(0.0f, size_y, size_z), 1.0f), transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(size_x, size_y, size_z), 1.0f), color);
-        m_debug_renderer.lines.emplace_back(transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(0.0f, size_y, 0.0f), 1.0f), transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(0.0f, size_y, size_z), 1.0f), color);
-        m_debug_renderer.lines.emplace_back(transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(size_x, size_y, 0.0f), 1.0f), transform * glm::vec4(glm::vec3(aabb.min) + glm::vec3(size_x, size_y, size_z), 1.0f), color);
+        m_debug_renderer.lines.emplace_back(transform * glm::vec4(aabb.min + glm::vec3(0.0f, size_y, 0.0f), 1.0f), transform * glm::vec4(aabb.min + glm::vec3(size_x, size_y, 0.0f), 1.0f), color);
+        m_debug_renderer.lines.emplace_back(transform * glm::vec4(aabb.min + glm::vec3(0.0f, size_y, size_z), 1.0f), transform * glm::vec4(aabb.min + glm::vec3(size_x, size_y, size_z), 1.0f), color);
+        m_debug_renderer.lines.emplace_back(transform * glm::vec4(aabb.min + glm::vec3(0.0f, size_y, 0.0f), 1.0f), transform * glm::vec4(aabb.min + glm::vec3(0.0f, size_y, size_z), 1.0f), color);
+        m_debug_renderer.lines.emplace_back(transform * glm::vec4(aabb.min + glm::vec3(size_x, size_y, 0.0f), 1.0f), transform * glm::vec4(aabb.min + glm::vec3(size_x, size_y, size_z), 1.0f), color);
     }
 
     void Renderer::imgui_initialize() const {
