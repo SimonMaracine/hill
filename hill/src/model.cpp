@@ -38,10 +38,7 @@ namespace hill::model {
                 buffer.resize(texture->mWidth);
                 std::memcpy(buffer.data(), texture->pcData, texture->mWidth);
 
-                auto result_texture = std::make_shared<image::Image>(buffer);
-                ctx.processed_textures[path.C_Str()] = result_texture;
-
-                return result_texture;
+                return ctx.processed_textures[path.C_Str()] = std::make_shared<image::Image>(buffer);
             }
 
             throw ModelError("Raw image loading not implemented");
@@ -50,10 +47,7 @@ namespace hill::model {
         utility::Buffer buffer;
         utility::read_file(std::filesystem::path(path.C_Str()), buffer);
 
-        auto result_texture = std::make_shared<image::Image>(buffer);
-        ctx.processed_textures[path.C_Str()] = result_texture;
-
-        return result_texture;
+        return ctx.processed_textures[path.C_Str()] = std::make_shared<image::Image>(buffer);
     }
 
     static mesh::Material load_material_properties(const aiMaterial* material) {
@@ -85,23 +79,7 @@ namespace hill::model {
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFileFromMemory(buffer.data(), buffer.size(), flags);
 
-        if (!scene) {
-            throw ModelError(std::format("Could not load model: {}", importer.GetErrorString()));
-        }
-
-        if (!scene->mRootNode) {
-            throw ModelError("No root node in scene");
-        }
-
-        if (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) {
-            throw ModelError("Model is incomplete");
-        }
-
-        TraversalCtx ctx;
-
-        m_root = std::make_shared<Node>();
-        ctx.current_node = m_root;
-        process_node(scene->mRootNode, scene, ctx);
+        load(importer, scene);
     }
 
     Model::Model(const utility::FilePath& file_path) {
@@ -110,6 +88,10 @@ namespace hill::model {
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(file_path.string().c_str(), flags);
 
+        load(importer, scene);
+    }
+
+    void Model::load(const Assimp::Importer& importer, const aiScene* scene) {
         if (!scene) {
             throw ModelError(std::format("Could not load model: {}", importer.GetErrorString()));
         }

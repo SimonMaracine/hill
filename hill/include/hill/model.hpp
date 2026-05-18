@@ -14,6 +14,10 @@ struct aiScene;
 struct aiNode;
 struct aiMesh;
 
+namespace Assimp {
+    class Importer;
+}
+
 namespace hill::model {
     struct Node {
         std::weak_ptr<Node> parent;
@@ -41,7 +45,8 @@ namespace hill::model {
 
         const Node* root() const { return m_root.get(); }
     private:
-        void process_node(const aiNode* node, const aiScene* scene, TraversalCtx& ctx);
+        void load(const Assimp::Importer& importer, const aiScene* scene);
+        static void process_node(const aiNode* node, const aiScene* scene, TraversalCtx& ctx);
         static mesh::Mesh process_mesh(const aiMesh* mesh, const aiScene* scene, TraversalCtx& ctx);
 
         std::shared_ptr<Node> m_root;

@@ -149,6 +149,11 @@ void SdlExample::run() {
     auto cube = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/cube/cube.glb")));
     m_renderer->root_node()->add(cube);
 
+    auto tree = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/tree.fbx")));
+    tree->translation(glm::vec3(-12.0f, 1.0f, -8.0f));
+    tree->scale(glm::vec3(0.005f));
+    m_renderer->root_node()->add(tree);
+
     auto light = std::make_shared<hill::scene::DirectionalLightNode>("light");
     light->directional_light.direction = glm::normalize(glm::vec3(0.1f, -1.0f, 0.4f));
     m_renderer->root_node()->add(light);
