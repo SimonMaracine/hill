@@ -11,6 +11,9 @@ namespace hill::renderer_command {
     void draw_elements_triangles(int count, int offset = 0);
     void draw_arrays_lines(int count);
 
+    void bind_texture_2d(unsigned int texture, unsigned int unit);
+    void unbind_texture_2d(unsigned int unit);
+
     void clear_color(glm::vec4 color);
 
     void viewport(int x, int y, int width, int height);

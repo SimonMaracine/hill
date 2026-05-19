@@ -45,6 +45,16 @@ namespace hill::renderer_command {
         glDrawArrays(GL_LINES, 0, count);
     }
 
+    void bind_texture_2d(unsigned int texture, unsigned int unit) {
+        glActiveTexture(GL_TEXTURE0 + unit);
+        glBindTexture(GL_TEXTURE_2D, texture);
+    }
+
+    void unbind_texture_2d(unsigned int unit) {
+        glActiveTexture(GL_TEXTURE0 + unit);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
     void clear_color(glm::vec4 color) {
         glClearColor(color.r, color.g, color.b, color.a);
     }

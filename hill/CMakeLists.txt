@@ -22,6 +22,7 @@ target_sources(
         "src/glad.cpp"
         "src/graphics_api.cpp"
         "src/image.cpp"
+        "src/material.cpp"
         "src/mesh.cpp"
         "src/model.cpp"
         "src/primitives_registry.cpp"

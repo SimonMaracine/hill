@@ -153,6 +153,16 @@ namespace hill::shader {
         glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
     }
 
+    void Program::upload_uniform_int1(const std::string& name, int value) const {
+        const int location = glGetUniformLocation(m_program, name.c_str());
+
+        if (location < 0) {
+            throw ShaderError(std::format("Could not find uniform: {}", name));
+        }
+
+        glUniform1i(location, value);
+    }
+
     bool Program::link_successful() const {
         int link_status {};
         glGetProgramiv(m_program, GL_LINK_STATUS, &link_status);
