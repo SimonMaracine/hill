@@ -78,21 +78,23 @@ namespace hill::scene {
     }
 
     std::shared_ptr<material::Material> ModelNode::create_material(const mesh::Mesh& mesh) {
-        std::shared_ptr<material::Material> result_material;
+        material::MaterialDescription material_description;
 
-        switch (renderer_common::choose_shader_feature_set(mesh)) {
-            case renderer_common::ShaderFeatureBase: {
-                auto material = std::make_shared<material::MaterialBasic>();
-                material->ambient_color = mesh.material.color_ambient;
-                material->diffuse_color = mesh.material.color_diffuse;
-                material->specular_color = mesh.material.color_specular;
-                material->shininess = mesh.material.shininess;
+        const auto shader_feature_set = renderer_common::choose_shader_feature_set(mesh);
 
-                result_material = std::move(material);
-            }
+        material_description.add_uniform("u_material.color_ambient", glm::vec3(0.0f));
+        material_description.add_uniform("u_material.color_diffuse", glm::vec3(0.0f));
+        material_description.add_uniform("u_material.color_specular", glm::vec3(0.0f));
+        material_description.add_uniform("u_material.shininess", 0.0f);
+
+        if (shader_feature_set & renderer_common::ShaderFeatureDiffuseMap) {
+            material_description.remove_uniform("u_material.color_ambient");
+            material_description.remove_uniform("u_material.color_diffuse");
+
+            material_description.add_texture("u_material.texture_diffuse");
         }
 
-        return result_material;
+        return std::make_shared<material::Material>(material_description);
     }
 
     void DirectionalLightNode::renderer_process(renderer::Renderer& renderer, renderer::TraversalCtx& ctx) {

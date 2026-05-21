@@ -70,7 +70,8 @@ namespace hill::renderer {
 
         std::shared_ptr<vertex_array::VertexArray> create_vertex_array(const mesh::Mesh& mesh) const;
         std::shared_ptr<shader::Program> create_program(renderer_common::ShaderFeatureSet shader_feature_set);
-        std::shared_ptr<shader::Program> get_program(const mesh::Mesh& mesh);
+        std::shared_ptr<shader::Program> get_or_create_program(const mesh::Mesh& mesh);
+        std::shared_ptr<material::Material> initialize_material(const mesh::Mesh& mesh, std::shared_ptr<material::Material> material);
 
         imgui::ImGui* m_imgui {};
         configuration::Configuration m_configuration;

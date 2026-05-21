@@ -7,6 +7,7 @@
 
 #include "hill/primitives/vertex_buffer.hpp"
 #include "hill/primitives/element_buffer.hpp"
+#include "hill/primitives/texture2d.hpp"
 #include "hill/graphics_api.hpp"
 #include "hill/renderer_command.hpp"
 #include "hill/debug.hpp"
@@ -293,12 +294,12 @@ namespace hill::renderer {
     void Renderer::configure(scene::ModelNode* node) {
         node->m_render_objects.reserve(node->meshes_count());
 
-        for (const auto& [i, mesh] : node->m_raw_meshes | std::views::enumerate) {
+        for (const auto& [raw_mesh, mesh] : std::views::zip(node->m_raw_meshes, node->m_meshes)) {
             renderer_common::Object& object = node->m_render_objects.emplace_back();
-            object.elements_count = int(mesh->indices.size());
-            object.vertex_array = create_vertex_array(*mesh);
-            object.material = node->m_meshes[std::size_t(i)].material;
-            object.material->m_program = get_program(*mesh);
+            object.elements_count = int(raw_mesh->indices.size());
+            object.vertex_array = create_vertex_array(*raw_mesh);
+            object.material = initialize_material(*raw_mesh, mesh.material);
+            object.material->m_program = get_or_create_program(*raw_mesh);
         }
     }
 
@@ -339,12 +340,12 @@ namespace hill::renderer {
         std::string vertex_shader_source;
         std::string fragment_shader_source;
 
-        switch (shader_feature_set) {
-            case renderer_common::ShaderFeatureBase:
-                utility::read_file("shaders/basic.vert", vertex_shader_source);
-                utility::read_file("shaders/basic.frag", fragment_shader_source);
-                break;
-        }
+        // switch (shader_feature_set) {  // TODO
+        //     case renderer_common::ShaderFeatureBase:
+        //         utility::read_file("shaders/basic.vert", vertex_shader_source);
+        //         utility::read_file("shaders/basic.frag", fragment_shader_source);
+        //         break;
+        // }
 
         auto vertex_shader = std::make_shared<shader::Shader>(shader::ShaderType::Vertex);
         vertex_shader->compile(vertex_shader_source);
@@ -362,7 +363,7 @@ namespace hill::renderer {
         return program;
     }
 
-    std::shared_ptr<shader::Program> Renderer::get_program(const mesh::Mesh& mesh) {
+    std::shared_ptr<shader::Program> Renderer::get_or_create_program(const mesh::Mesh& mesh) {
         const auto shader_feature_set = renderer_common::choose_shader_feature_set(mesh);
 
         if (const auto iter = m_programs.find(shader_feature_set); iter != m_programs.end()) {
@@ -372,5 +373,37 @@ namespace hill::renderer {
         }
 
         return create_program(shader_feature_set);
+    }
+
+    std::shared_ptr<material::Material> Renderer::initialize_material(const mesh::Mesh& mesh, std::shared_ptr<material::Material> material) {
+        if (const auto iter = material->m_floats3.find("u_material.color_ambient"); iter != material->m_floats3.end()) {
+            iter->second = mesh.material.color_ambient;
+        }
+
+        if (const auto iter = material->m_floats3.find("u_material.color_diffuse"); iter != material->m_floats3.end()) {
+            iter->second = mesh.material.color_diffuse;
+        }
+
+        if (const auto iter = material->m_floats3.find("u_material.color_specular"); iter != material->m_floats3.end()) {
+            iter->second = mesh.material.color_specular;
+        }
+
+        if (const auto iter = material->m_floats1.find("u_material.shininess"); iter != material->m_floats1.end()) {
+            iter->second = mesh.material.shininess;
+        }
+
+        if (const auto iter = material->m_textures.find("u_material.texture_diffuse"); iter != material->m_textures.end()) {
+            auto texture = std::make_shared<texture2d::Texture2D>(  // FIXME cache
+                texture2d::Format::Rgba8,
+                mesh.material.texture_diffuse->width(),
+                mesh.material.texture_diffuse->height()
+            );
+
+            texture->upload_data(mesh.material.texture_diffuse->data());
+
+            iter->second = std::make_pair(std::move(texture), 0);
+        }
+
+        return material;
     }
 }

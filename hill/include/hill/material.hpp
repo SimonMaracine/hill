@@ -1,9 +1,12 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
+#include <variant>
 
 #include "hill/primitives/shader.hpp"
+#include "hill/primitives/texture2d.hpp"
 #include "hill/glm.h++"
 
 namespace hill::renderer {
@@ -52,28 +55,19 @@ namespace hill::material {
 
     class MaterialDescription {
     public:
-        MaterialDescription() = default;
-        explicit MaterialDescription(std::shared_ptr<shader::Program> program)
-            : m_program(std::move(program)) {}
+        void add_uniform(std::string name, float value);
+        void add_uniform(std::string name, glm::vec3 value);
+        void remove_uniform(const std::string& name);
 
-        enum class Uniform {
-            Float1,
-            Float3,
-            Float16
-        };
-
-        void add_uniform(Uniform uniform, std::string name);
         void add_texture(std::string name);
+        void remove_texture(const std::string& name);
     private:
-        std::shared_ptr<shader::Program> m_program;
+        using Uniform = std::variant<float, glm::vec3>;
 
-        std::unordered_set<std::string> m_uniforms_float1;
-        std::unordered_set<std::string> m_uniforms_float3;
-        std::unordered_set<std::string> m_uniforms_float16;
+        std::unordered_map<std::string, Uniform> m_uniforms;
         std::unordered_set<std::string> m_textures;
 
         friend class Material;
-        friend class renderer::Renderer;
     };
 
     class Material {
@@ -84,29 +78,14 @@ namespace hill::material {
 
         void set_float1(const std::string& name, float value);
         void set_float3(const std::string& name, glm::vec3 value);
-        void set_float16(const std::string& name, const glm::mat4& value);
-        void set_texture(const std::string& name, unsigned int texture, unsigned int unit);
+        void set_texture(const std::string& name, std::shared_ptr<texture2d::Texture2D> texture, unsigned int unit);
     private:
-        struct Element {
-            enum Type : unsigned int {
-                Float1,
-                Float3,
-                Float16,
-                Texture
-            } type {};
-
-            unsigned int offset {};
-        };
-
-        struct Texture {
-            unsigned int texture {};
-            unsigned int unit {};
-        };
+        std::unordered_map<std::string, float> m_floats1;
+        std::unordered_map<std::string, glm::vec3> m_floats3;
+        std::unordered_map<std::string, std::pair<std::shared_ptr<texture2d::Texture2D>, unsigned int>> m_textures;
 
         std::shared_ptr<shader::Program> m_program;
 
-        std::unique_ptr<unsigned char[]> m_data;
-        std::size_t m_size {};
-        std::unordered_map<std::string, Element> m_offsets;
+        friend class renderer::Renderer;
     };
 }

@@ -8,9 +8,9 @@ layout(location = 0) out vec4 o_color;
 uniform vec3 u_view_position;
 
 struct MaterialBasic {
-    vec3 ambient_color;
-    vec3 diffuse_color;
-    vec3 specular_color;
+    vec3 color_ambient;
+    vec3 color_diffuse;
+    vec3 color_specular;
     float shininess;
 };
 
@@ -18,9 +18,9 @@ uniform MaterialBasic u_material;
 
 struct DirectionalLight {
     vec3 direction;
-    vec3 ambient_color;
-    vec3 diffuse_color;
-    vec3 specular_color;
+    vec3 color_ambient;
+    vec3 color_diffuse;
+    vec3 color_specular;
 };
 
 uniform DirectionalLight u_directional_light;
@@ -32,15 +32,15 @@ vec3 phong(DirectionalLight directional_light, MaterialBasic material, vec3 frag
     const vec3 reflection_direction = reflect(-light_direction, fragment_normal);
 
     // Ambient
-    const vec3 ambient_light = directional_light.ambient_color * material.ambient_color;
+    const vec3 ambient_light = directional_light.color_ambient * material.color_ambient;
 
     // Diffuse
     const float diffuse_strength = max(dot(fragment_normal, light_direction), 0.0);
-    const vec3 diffuse_light = diffuse_strength * directional_light.diffuse_color * material.diffuse_color;
+    const vec3 diffuse_light = diffuse_strength * directional_light.color_diffuse * material.color_diffuse;
 
     // Specular
     const float specular_strength = pow(max(dot(view_direction, reflection_direction), 0.0), material.shininess);
-    const vec3 specular_light = specular_strength * directional_light.specular_color * material.specular_color;
+    const vec3 specular_light = specular_strength * directional_light.color_specular * material.color_specular;
 
     return ambient_light + diffuse_light + specular_light;
 }
