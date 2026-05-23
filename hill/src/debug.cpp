@@ -2,11 +2,23 @@
 
 #include <sstream>
 #include <memory>
+#include <utility>
 #include <cassert>
 
 #include <glad/gl.h>
 
 namespace hill::debug {
+    static Type severity_type(unsigned int severity) {
+        switch (severity) {
+            case GL_DEBUG_SEVERITY_HIGH: return Type::Error;
+            case GL_DEBUG_SEVERITY_MEDIUM: return Type::Warning;
+            case GL_DEBUG_SEVERITY_LOW: return Type::Information;
+            case GL_DEBUG_SEVERITY_NOTIFICATION: return Type::Notification;
+        }
+
+        std::unreachable();
+    }
+
     static void message_callback(
         unsigned int source,
         unsigned int type,
@@ -16,9 +28,9 @@ namespace hill::debug {
         const char* message,
         const void* user_param
     ) {
-        auto debug_output = static_cast<const DebugOutput*>(user_param);
+        const auto debug_output = static_cast<const DebugOutput*>(user_param);
 
-        if (debug_output->ignore_notification && severity == GL_DEBUG_SEVERITY_NOTIFICATION) {
+        if (!debug_output) {
             return;
         }
 
@@ -65,13 +77,31 @@ namespace hill::debug {
         stream << ' ';
         stream << message;
 
-        debug_output->output_callback(stream.str());
+        debug_output->output_callback(severity_type(severity), stream.str());
     }
 
     static std::unique_ptr<DebugOutput> g_debug_output;
 
     void initialize(DebugOutput debug_output) {
-        g_debug_output = std::make_unique<DebugOutput>(debug_output);
+        g_debug_output = std::make_unique<DebugOutput>(std::move(debug_output));
+    }
+
+    void uninitialize() {
+        g_debug_output.reset();
+    }
+
+    OutputCallback callback() {
+        if (!g_debug_output) {
+            return nullptr;
+        }
+
+        return g_debug_output->output_callback;
+    }
+
+    void enable_graphics_api() {
+        if (!g_debug_output) {
+            return;
+        }
 
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);

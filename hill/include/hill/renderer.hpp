@@ -13,6 +13,7 @@
 #include "hill/material.hpp"
 #include "hill/renderer_common.hpp"
 #include "hill/aabb.hpp"
+#include "hill/shader_assembler.hpp"
 #include "hill/glm.h++"
 
 namespace hill::editor {
@@ -69,26 +70,32 @@ namespace hill::renderer {
         void configure(scene::ModelNode* node);
 
         std::shared_ptr<vertex_array::VertexArray> create_vertex_array(const mesh::Mesh& mesh) const;
-        std::shared_ptr<shader::Program> create_program(renderer_common::ShaderFeatureSet shader_feature_set);
-        std::shared_ptr<shader::Program> get_or_create_program(const mesh::Mesh& mesh);
-        std::shared_ptr<material::Material> initialize_material(const mesh::Mesh& mesh, std::shared_ptr<material::Material> material);
+        std::shared_ptr<shader::Program> create_program(renderer_common::ShaderFeatureSet shader_feature_set, std::shared_ptr<material::Material> material) const;
+        std::shared_ptr<shader::Program> get_or_create_program(renderer_common::ShaderFeatureSet shader_feature_set, std::shared_ptr<material::Material> material);
+        std::shared_ptr<material::Material> initialize_material(const mesh::Material& raw_material, std::shared_ptr<material::Material> material);
 
+        // Client input
         imgui::ImGui* m_imgui {};
         configuration::Configuration m_configuration;
 
+        // Static data
+        shader_assembler::ShaderAssembler m_shader_assembler;
+
+        // Runtime data
         int m_window_width {};
         int m_window_height {};
-
         glm::vec3 m_background_color {0.6f, 0.6f, 0.7f};
 
         camera::Camera m_camera;
         light::DirectionalLight m_directional_light;
 
-        std::shared_ptr<scene::RootNode> m_root_node;
-
         std::vector<RenderObject> m_objects;
         std::unordered_map<renderer_common::ShaderFeatureSet, std::weak_ptr<shader::Program>> m_programs;
 
+        // Runtime scene hierarchy
+        std::shared_ptr<scene::RootNode> m_root_node;
+
+        // Debug renderer
         struct DebugRenderer {
             struct Line {
                 glm::vec3 p1 {};
@@ -103,6 +110,7 @@ namespace hill::renderer {
             std::shared_ptr<shader::Program> program;
         } m_debug_renderer;
 
+        // Performnace data
         mutable struct {
             std::chrono::high_resolution_clock::time_point last_time {};
             std::chrono::duration<double> frame_time {};

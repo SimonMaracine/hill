@@ -278,7 +278,27 @@ namespace hill::editor {
 
         separator();
 
-        material_basic(std::dynamic_pointer_cast<material::MaterialBasic>(mesh->node->m_meshes[mesh->index].material).get());
+        auto& material = *mesh->node->m_meshes[mesh->index].material;
+
+        if (const auto iter = material.m_floats3.find("u_material.color_ambient"); iter != material.m_floats3.end()) {
+            ImGui::DragFloat3("Ambient", glm::value_ptr(iter->second), 0.01f, 0.0f, 1.0f);
+        }
+
+        if (const auto iter = material.m_floats3.find("u_material.color_diffuse"); iter != material.m_floats3.end()) {
+            ImGui::DragFloat3("Diffuse", glm::value_ptr(iter->second), 0.01f, 0.0f, 1.0f);
+        }
+
+        if (const auto iter = material.m_floats3.find("u_material.color_specular"); iter != material.m_floats3.end()) {
+            ImGui::DragFloat3("Specular", glm::value_ptr(iter->second), 0.01f, 0.0f, 1.0f);
+        }
+
+        if (const auto iter = material.m_floats1.find("u_material.shininess"); iter != material.m_floats1.end()) {
+            ImGui::DragFloat("Shininess", &iter->second, 1.0f, 1.0f, 512.0f);
+        }
+
+        if (const auto iter = material.m_textures.find("u_material.texture_diffuse"); iter != material.m_textures.end()) {
+            ImGui::Text("Diffuse");
+        }
     }
 
     void Editor::nodes(scene::ModelNode* node) {
@@ -315,18 +335,18 @@ namespace hill::editor {
         }
     }
 
-    bool Editor::material_basic(material::MaterialBasic* material) {
-        if (!material) {
-            return false;
-        }
-
-        ImGui::DragFloat3("Ambient", glm::value_ptr(material->ambient_color), 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat3("Diffuse", glm::value_ptr(material->diffuse_color), 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat3("Specular", glm::value_ptr(material->specular_color), 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat("Shininess", &material->shininess, 1.0f, 1.0f, 512.0f);
-
-        return true;
-    }
+    // bool Editor::material_basic(material::MaterialBasic* material) {
+    //     if (!material) {
+    //         return false;
+    //     }
+    //
+    //     ImGui::DragFloat3("Ambient", glm::value_ptr(material->ambient_color), 0.01f, 0.0f, 1.0f);
+    //     ImGui::DragFloat3("Diffuse", glm::value_ptr(material->diffuse_color), 0.01f, 0.0f, 1.0f);
+    //     ImGui::DragFloat3("Specular", glm::value_ptr(material->specular_color), 0.01f, 0.0f, 1.0f);
+    //     ImGui::DragFloat("Shininess", &material->shininess, 1.0f, 1.0f, 512.0f);
+    //
+    //     return true;
+    // }
 
     void Editor::world_origin(renderer::Renderer& renderer) {
         const float far = 100.0f;  // TODO

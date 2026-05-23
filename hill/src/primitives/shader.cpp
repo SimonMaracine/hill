@@ -3,10 +3,12 @@
 #include <format>
 #include <ranges>
 #include <utility>
+#include <numeric>
 
 #include <glad/gl.h>
 
 #include "hill/primitives_registry.hpp"
+#include "hill/debug.hpp"
 
 namespace hill::shader {
     unsigned int shader_type_enum(ShaderType shader_type) {
@@ -41,7 +43,9 @@ namespace hill::shader {
         glCompileShader(m_shader);
 
         if (!compilation_successful()) {
-            throw CompileError(std::format("Could not compile shader: {}", info_log()));
+            debug::callback()(debug::Type::Information, std::format("Shader source:\n{}", source));
+
+            throw CompileError(std::format("Could not compile shader:\n{}", info_log()));
         }
     }
 
@@ -56,7 +60,10 @@ namespace hill::shader {
         glCompileShader(m_shader);
 
         if (!compilation_successful()) {
-            throw CompileError(std::format("Could not compile shader: {}", info_log()));
+            const auto source = std::accumulate(sources.begin(), sources.end(), std::string(), [](std::string lhs, const std::string& rhs) { return std::move(lhs) + rhs; });
+            debug::callback()(debug::Type::Information, std::format("Shader source:\n{}", source));
+
+            throw CompileError(std::format("Could not compile shader:\n{}", info_log()));
         }
     }
 

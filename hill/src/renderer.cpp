@@ -17,17 +17,18 @@
 namespace hill::renderer {
     Renderer::Renderer(imgui::ImGui& imgui, const configuration::Configuration& configuration)
         : m_imgui(&imgui), m_configuration(configuration) {
-        if (m_configuration.debug_output && graphics_api::debug_context()) {
-            debug::initialize(*m_configuration.debug_output);
+        if (graphics_api::debug_context()) {
+            debug::enable_graphics_api();
         }
 
         debug_initialize();
         imgui_initialize();
 
-        renderer_command::enable_depth_test();
-
+        m_shader_assembler.initialize();
         m_root_node = std::make_shared<scene::RootNode>();
         m_performance.last_time = std::chrono::high_resolution_clock::now();
+
+        renderer_command::enable_depth_test();
     }
 
     Renderer::~Renderer() {
@@ -56,9 +57,9 @@ namespace hill::renderer {
                 program->use();
                 program->upload_uniform_float16("u_projection_view", m_camera.projection_view());
                 program->upload_uniform_float3("u_directional_light.direction", m_directional_light.direction);
-                program->upload_uniform_float3("u_directional_light.ambient_color", m_directional_light.ambient_color);
-                program->upload_uniform_float3("u_directional_light.diffuse_color", m_directional_light.diffuse_color);
-                program->upload_uniform_float3("u_directional_light.specular_color", m_directional_light.specular_color);
+                program->upload_uniform_float3("u_directional_light.color_ambient", m_directional_light.ambient_color);
+                program->upload_uniform_float3("u_directional_light.color_diffuse", m_directional_light.diffuse_color);
+                program->upload_uniform_float3("u_directional_light.color_specular", m_directional_light.specular_color);
                 program->upload_uniform_float3("u_view_position", m_camera.position());
                 program->unuse();
             }
@@ -298,8 +299,8 @@ namespace hill::renderer {
             renderer_common::Object& object = node->m_render_objects.emplace_back();
             object.elements_count = int(raw_mesh->indices.size());
             object.vertex_array = create_vertex_array(*raw_mesh);
-            object.material = initialize_material(*raw_mesh, mesh.material);
-            object.material->m_program = get_or_create_program(*raw_mesh);
+            object.material = initialize_material(raw_mesh->material, mesh.material);
+            object.material->m_program = get_or_create_program(renderer_common::choose_shader_feature_set(*raw_mesh), object.material);
         }
     }
 
@@ -336,70 +337,48 @@ namespace hill::renderer {
         return vertex_array;
     }
 
-    std::shared_ptr<shader::Program> Renderer::create_program(renderer_common::ShaderFeatureSet shader_feature_set) {
-        std::string vertex_shader_source;
-        std::string fragment_shader_source;
-
-        // switch (shader_feature_set) {  // TODO
-        //     case renderer_common::ShaderFeatureBase:
-        //         utility::read_file("shaders/basic.vert", vertex_shader_source);
-        //         utility::read_file("shaders/basic.frag", fragment_shader_source);
-        //         break;
-        // }
-
-        auto vertex_shader = std::make_shared<shader::Shader>(shader::ShaderType::Vertex);
-        vertex_shader->compile(vertex_shader_source);
-
-        auto fragment_shader = std::make_shared<shader::Shader>(shader::ShaderType::Fragment);
-        fragment_shader->compile(fragment_shader_source);
-
-        const auto program = std::make_shared<shader::Program>();
-        program->attach_shader(std::move(vertex_shader));
-        program->attach_shader(std::move(fragment_shader));
-        program->link();
-
-        m_programs[shader_feature_set] = program;
-
-        return program;
+    std::shared_ptr<shader::Program> Renderer::create_program(renderer_common::ShaderFeatureSet shader_feature_set, std::shared_ptr<material::Material> material) const {
+        return m_shader_assembler.assemble_program(shader_feature_set, *material);
     }
 
-    std::shared_ptr<shader::Program> Renderer::get_or_create_program(const mesh::Mesh& mesh) {
-        const auto shader_feature_set = renderer_common::choose_shader_feature_set(mesh);
-
+    std::shared_ptr<shader::Program> Renderer::get_or_create_program(renderer_common::ShaderFeatureSet shader_feature_set, std::shared_ptr<material::Material> material) {
         if (const auto iter = m_programs.find(shader_feature_set); iter != m_programs.end()) {
             if (const auto program = iter->second.lock(); program) {
                 return program;
             }
         }
 
-        return create_program(shader_feature_set);
+        const auto program = create_program(shader_feature_set, std::move(material));
+        m_programs[shader_feature_set] = program;
+
+        return program;
     }
 
-    std::shared_ptr<material::Material> Renderer::initialize_material(const mesh::Mesh& mesh, std::shared_ptr<material::Material> material) {
+    std::shared_ptr<material::Material> Renderer::initialize_material(const mesh::Material& raw_material, std::shared_ptr<material::Material> material) {
         if (const auto iter = material->m_floats3.find("u_material.color_ambient"); iter != material->m_floats3.end()) {
-            iter->second = mesh.material.color_ambient;
+            iter->second = raw_material.color_ambient;
         }
 
         if (const auto iter = material->m_floats3.find("u_material.color_diffuse"); iter != material->m_floats3.end()) {
-            iter->second = mesh.material.color_diffuse;
+            iter->second = raw_material.color_diffuse;
         }
 
         if (const auto iter = material->m_floats3.find("u_material.color_specular"); iter != material->m_floats3.end()) {
-            iter->second = mesh.material.color_specular;
+            iter->second = raw_material.color_specular;
         }
 
         if (const auto iter = material->m_floats1.find("u_material.shininess"); iter != material->m_floats1.end()) {
-            iter->second = mesh.material.shininess;
+            iter->second = raw_material.shininess;
         }
 
         if (const auto iter = material->m_textures.find("u_material.texture_diffuse"); iter != material->m_textures.end()) {
             auto texture = std::make_shared<texture2d::Texture2D>(  // FIXME cache
                 texture2d::Format::Rgba8,
-                mesh.material.texture_diffuse->width(),
-                mesh.material.texture_diffuse->height()
+                raw_material.texture_diffuse->width(),
+                raw_material.texture_diffuse->height()
             );
 
-            texture->upload_data(mesh.material.texture_diffuse->data());
+            texture->upload_data(raw_material.texture_diffuse->data());
 
             iter->second = std::make_pair(std::move(texture), 0);
         }

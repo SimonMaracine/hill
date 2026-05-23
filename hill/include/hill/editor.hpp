@@ -59,8 +59,6 @@ namespace hill::editor {
 
         void nodes(scene::ModelNode* node);
 
-        bool material_basic(material::MaterialBasic* material);
-
         void world_origin(renderer::Renderer& renderer);
         void world_grid(renderer::Renderer& renderer);
         void world_bounding_box(renderer::Renderer& renderer);

@@ -8,13 +8,10 @@
 #include <backends/imgui_impl_sdl3.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <hill/graphics_api.hpp>
+#include "hill/debug.hpp"
 
 static hill::configuration::Configuration make_configuration() {
-    hill::debug::DebugOutput debug_output;
-    debug_output.output_callback = [](std::string message) { std::println(stderr, "{}", message); };
-
     hill::configuration::Configuration config;
-    config.debug_output = debug_output;
 
     return config;
 }
@@ -76,6 +73,13 @@ SdlExample::SdlExample() {
         std::println(stderr, "SDL_SetWindowMinimumSize: {}", SDL_GetError());
     }
 
+    hill::debug::DebugOutput debug_output;
+    debug_output.output_callback = [](hill::debug::Type, std::string message) {
+        std::println(stderr, "{}", message);
+    };
+
+    hill::debug::initialize(debug_output);
+
     m_renderer = std::make_unique<hill::renderer::Renderer>(*this, make_configuration());
     m_editor = std::make_unique<hill::editor::Editor>(*this);
 }
@@ -83,6 +87,8 @@ SdlExample::SdlExample() {
 SdlExample::~SdlExample() {
     m_editor.reset();
     m_renderer.reset();
+
+    hill::debug::uninitialize();
 
     SDL_GL_DestroyContext(static_cast<SDL_GLContext>(m_context));
     SDL_DestroyWindow(m_window);

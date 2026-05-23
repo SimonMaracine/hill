@@ -55,6 +55,18 @@ namespace hill::material {
         }
     }
 
+    float Material::get_float1(const std::string& name) const {
+        return m_floats1.at(name);
+    }
+
+    glm::vec3 Material::get_float3(const std::string& name) const {
+        return m_floats3.at(name);
+    }
+
+    Texture Material::get_texture(const std::string& name) const {
+        return m_textures.at(name);
+    }
+
     void Material::set_float1(const std::string& name, float value) {
         m_floats1.at(name) = value;
     }
@@ -63,7 +75,7 @@ namespace hill::material {
         m_floats3.at(name) = value;
     }
 
-    void Material::set_texture(const std::string& name, std::shared_ptr<texture2d::Texture2D> texture, unsigned int unit) {
-        m_textures.at(name) = std::make_pair(texture, unit);
+    void Material::set_texture(const std::string& name, Texture texture) {
+        m_textures.at(name) = std::move(texture);
     }
 }

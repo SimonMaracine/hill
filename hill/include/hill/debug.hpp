@@ -3,7 +3,16 @@
 #include <string>
 
 namespace hill::debug {
-    using OutputCallback = void(*)(std::string);
+    enum class Type {
+        Notification,
+        Debug,
+        Information,
+        Warning,
+        Error,
+        Critical
+    };
+
+    using OutputCallback = void(*)(Type, std::string);
 
     struct DebugOutput {
         OutputCallback output_callback {};
@@ -11,4 +20,8 @@ namespace hill::debug {
     };
 
     void initialize(DebugOutput debug_output);
+    void uninitialize();
+
+    OutputCallback callback();
+    void enable_graphics_api();
 }
