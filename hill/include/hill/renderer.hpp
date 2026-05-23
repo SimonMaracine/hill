@@ -13,7 +13,6 @@
 #include "hill/material.hpp"
 #include "hill/renderer_common.hpp"
 #include "hill/aabb.hpp"
-#include "hill/shader_assembler.hpp"
 #include "hill/glm.h++"
 
 namespace hill::editor {
@@ -56,8 +55,7 @@ namespace hill::renderer {
         void debug_initialize();
         void debug_render();
 
-        void submit(const RenderObject& object);
-
+        void render_initialize();
         void render_begin();
         void render_end();
         void render_traverse_tree(TraversalCtx& ctx, scene::Node* node);
@@ -65,21 +63,27 @@ namespace hill::renderer {
         void render_node(TraversalCtx& ctx, scene::ModelNode* node);
         void render_node(TraversalCtx& ctx, scene::DirectionalLightNode* node);
 
+        void submit(const RenderObject& object);
+
         void draw_object(const RenderObject& object) const;
 
         void configure(scene::ModelNode* node);
 
         std::shared_ptr<vertex_array::VertexArray> create_vertex_array(const mesh::Mesh& mesh) const;
-        std::shared_ptr<shader::Program> create_program(renderer_common::ShaderFeatureSet shader_feature_set, std::shared_ptr<material::Material> material) const;
-        std::shared_ptr<shader::Program> get_or_create_program(renderer_common::ShaderFeatureSet shader_feature_set, std::shared_ptr<material::Material> material);
+        std::shared_ptr<shader::Program> create_program(renderer_common::ShaderFeatureSet shader_feature_set) const;
+        std::shared_ptr<shader::Program> get_or_create_program(renderer_common::ShaderFeatureSet shader_feature_set);
         std::shared_ptr<material::Material> initialize_material(const mesh::Material& raw_material, std::shared_ptr<material::Material> material);
+        std::vector<std::string> create_vertex_shader_sources(renderer_common::ShaderFeatureSet shader_feature_set) const;
+        std::vector<std::string> create_fragment_shader_sources(renderer_common::ShaderFeatureSet shader_feature_set) const;
+        static void setup_shader_features(renderer_common::ShaderFeatureSet shader_feature_set, std::vector<std::string>& sources);
 
         // Client input
         imgui::ImGui* m_imgui {};
         configuration::Configuration m_configuration;
 
         // Static data
-        shader_assembler::ShaderAssembler m_shader_assembler;
+        std::string m_phong_vertex_shader_source;
+        std::string m_phong_fragment_shader_source;
 
         // Runtime data
         int m_window_width {};

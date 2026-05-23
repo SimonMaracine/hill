@@ -29,7 +29,6 @@ target_sources(
         "src/renderer_command.cpp"
         "src/renderer_common.cpp"
         "src/scene.cpp"
-        "src/shader_assembler.cpp"
         "src/utility.cpp"
     PUBLIC
         FILE_SET HEADERS
@@ -62,7 +61,6 @@ target_sources(
             "include/hill/renderer_command.hpp"
             "include/hill/renderer_common.hpp"
             "include/hill/scene.hpp"
-            "include/hill/shader_assembler.hpp"
             "include/hill/utility.hpp"
             "include/hill/windowing_system.hpp"
 )

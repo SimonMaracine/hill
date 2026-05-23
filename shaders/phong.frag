@@ -31,3 +31,48 @@ vec3 phong(DirectionalLight directional_light, PhongMaterial material, vec3 frag
 
     return ambient_light + diffuse_light + specular_light;
 }
+
+struct Material {
+#ifndef FEATURE_DIFFUSE_MAP
+    vec3 color_ambient;
+    vec3 color_diffuse;
+#endif
+
+#ifdef FEATURE_DIFFUSE_MAP
+    sampler2D texture_diffuse;
+#endif
+
+    vec3 color_specular;
+    float shininess;
+};
+
+in vec3 v_fragment_normal;
+in vec3 v_fragment_position;
+
+layout(location = 0) out vec4 o_color;
+
+uniform vec3 u_view_position;
+uniform DirectionalLight u_directional_light;
+uniform Material u_material;
+
+PhongMaterial get_material() {
+    PhongMaterial material;
+
+#ifndef FEATURE_DIFFUSE_MAP
+    material.color_ambient = u_material.color_ambient;
+    material.color_diffuse = u_material.color_diffuse;
+#else
+    material.color_ambient = vec3(texture(u_material.texture_diffuse));
+    material.color_diffuse = vec3(texture(u_material.texture_diffuse));
+#endif
+
+    material.color_specular = u_material.color_specular;
+    material.shininess = u_material.shininess;
+
+    return material;
+}
+
+void main() {
+    const vec3 color = phong(u_directional_light, get_material(), v_fragment_position, v_fragment_normal, u_view_position);
+    o_color = vec4(color, 1.0);
+}

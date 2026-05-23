@@ -21,10 +21,10 @@ namespace hill::renderer {
             debug::enable_graphics_api();
         }
 
-        debug_initialize();
         imgui_initialize();
+        debug_initialize();
+        render_initialize();
 
-        m_shader_assembler.initialize();
         m_root_node = std::make_shared<scene::RootNode>();
         m_performance.last_time = std::chrono::high_resolution_clock::now();
 
@@ -219,8 +219,9 @@ namespace hill::renderer {
         m_debug_renderer.lines.clear();
     }
 
-    void Renderer::submit(const RenderObject& object) {
-        m_objects.emplace_back(object);
+    void Renderer::render_initialize() {
+        utility::read_file("shaders/phong.vert", m_phong_vertex_shader_source);
+        utility::read_file("shaders/phong.frag", m_phong_fragment_shader_source);
     }
 
     void Renderer::render_begin() {
@@ -278,6 +279,10 @@ namespace hill::renderer {
         m_directional_light = node->directional_light;
     }
 
+    void Renderer::submit(const RenderObject& object) {
+        m_objects.emplace_back(object);
+    }
+
     void Renderer::draw_object(const RenderObject& object) const {
         object.material->m_program->use();
         object.material->upload_data();
@@ -300,8 +305,10 @@ namespace hill::renderer {
             object.elements_count = int(raw_mesh->indices.size());
             object.vertex_array = create_vertex_array(*raw_mesh);
             object.material = initialize_material(raw_mesh->material, mesh.material);
-            object.material->m_program = get_or_create_program(renderer_common::choose_shader_feature_set(*raw_mesh), object.material);
+            object.material->m_program = get_or_create_program(renderer_common::choose_shader_feature_set(*raw_mesh));
         }
+
+        debug::callback()(debug::Type::Information, std::format("Configured model node {}", static_cast<void*>(node)));
     }
 
     std::shared_ptr<vertex_array::VertexArray> Renderer::create_vertex_array(const mesh::Mesh& mesh) const {
@@ -337,18 +344,29 @@ namespace hill::renderer {
         return vertex_array;
     }
 
-    std::shared_ptr<shader::Program> Renderer::create_program(renderer_common::ShaderFeatureSet shader_feature_set, std::shared_ptr<material::Material> material) const {
-        return m_shader_assembler.assemble_program(shader_feature_set, *material);
+    std::shared_ptr<shader::Program> Renderer::create_program(renderer_common::ShaderFeatureSet shader_feature_set) const {
+        auto vertex_shader = std::make_shared<shader::Shader>(shader::ShaderType::Vertex);
+        vertex_shader->compile(create_vertex_shader_sources(shader_feature_set));
+
+        auto fragment_shader = std::make_shared<shader::Shader>(shader::ShaderType::Fragment);
+        fragment_shader->compile(create_fragment_shader_sources(shader_feature_set));
+
+        const auto program = std::make_shared<shader::Program>();
+        program->attach_shader(std::move(vertex_shader));
+        program->attach_shader(std::move(fragment_shader));
+        program->link();
+
+        return program;
     }
 
-    std::shared_ptr<shader::Program> Renderer::get_or_create_program(renderer_common::ShaderFeatureSet shader_feature_set, std::shared_ptr<material::Material> material) {
+    std::shared_ptr<shader::Program> Renderer::get_or_create_program(renderer_common::ShaderFeatureSet shader_feature_set) {
         if (const auto iter = m_programs.find(shader_feature_set); iter != m_programs.end()) {
             if (const auto program = iter->second.lock(); program) {
                 return program;
             }
         }
 
-        const auto program = create_program(shader_feature_set, std::move(material));
+        const auto program = create_program(shader_feature_set);
         m_programs[shader_feature_set] = program;
 
         return program;
@@ -384,5 +402,65 @@ namespace hill::renderer {
         }
 
         return material;
+    }
+
+    std::vector<std::string> Renderer::create_vertex_shader_sources(renderer_common::ShaderFeatureSet shader_feature_set) const {
+        std::vector<std::string> sources;
+
+        sources.push_back("#version 430 core\n\n");
+        setup_shader_features(shader_feature_set, sources);
+        sources.push_back(m_phong_vertex_shader_source);
+
+        return sources;
+    }
+
+    std::vector<std::string> Renderer::create_fragment_shader_sources(renderer_common::ShaderFeatureSet shader_feature_set) const {
+        std::vector<std::string> sources;
+
+        sources.push_back("#version 430 core\n\n");
+        setup_shader_features(shader_feature_set, sources);
+        sources.push_back(m_phong_fragment_shader_source);
+
+        return sources;
+    }
+
+    void Renderer::setup_shader_features(renderer_common::ShaderFeatureSet shader_feature_set, std::vector<std::string>& sources) {
+        bool texture_coordinates {};
+
+        if (shader_feature_set & renderer_common::ShaderFeatureVertexColors) {
+            sources.push_back("#define FEATURE_VERTEX_COLORS\n");
+        }
+
+        if (shader_feature_set & renderer_common::ShaderFeatureDiffuseMap) {
+            sources.push_back("#define FEATURE_DIFFUSE_MAP\n");
+            texture_coordinates = true;
+        }
+
+        if (shader_feature_set & renderer_common::ShaderFeatureSpecularMap) {
+            sources.push_back("#define FEATURE_SPECULAR_MAP\n");
+            texture_coordinates = true;
+        }
+
+        if (shader_feature_set & renderer_common::ShaderFeatureNormalMap) {
+            sources.push_back("#define FEATURE_NORMAL_MAP\n");
+            texture_coordinates = true;
+        }
+
+        if (shader_feature_set & renderer_common::ShaderFeatureEmissionMap) {
+            sources.push_back("#define FEATURE_EMISSION_MAP\n");
+            texture_coordinates = true;
+        }
+
+        if (shader_feature_set & renderer_common::ShaderFeatureFog) {
+            sources.push_back("#define FEATURE_FOG\n");
+        }
+
+        if (shader_feature_set & renderer_common::ShaderFeatureShadow) {
+            sources.push_back("#define FEATURE_SHADOW\n");
+        }
+
+        if (texture_coordinates) {
+            sources.push_back("#define META_FEATURE_TEXTURE_COORDINATES\n");
+        }
     }
 }

@@ -21,7 +21,8 @@ namespace hill::renderer_common {
         ShaderFeatureSpecularMap = 1u << 2,
         ShaderFeatureNormalMap = 1u << 3,
         ShaderFeatureEmissionMap = 1u << 4,
-        ShaderFeatureShadowed = 1u << 5
+        ShaderFeatureFog = 1u << 5,
+        ShaderFeatureShadow = 1u << 6
     };
 
     using ShaderFeatureSet = unsigned int;
