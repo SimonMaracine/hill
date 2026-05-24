@@ -27,5 +27,5 @@ namespace hill::renderer_common {
 
     using ShaderFeatureSet = unsigned int;
 
-    ShaderFeatureSet choose_shader_feature_set(const mesh::Mesh& mesh);
+    ShaderFeatureSet choose_shader_feature_set(const mesh::MeshSource& mesh_source);
 }

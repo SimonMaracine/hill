@@ -36,15 +36,15 @@ struct Material {
 #ifndef FEATURE_DIFFUSE_MAP
     vec3 color_ambient;
     vec3 color_diffuse;
-#endif
-
-#ifdef FEATURE_DIFFUSE_MAP
+#else
     sampler2D texture_diffuse;
 #endif
 
     vec3 color_specular;
     float shininess;
 };
+
+// -------------------------------------------------------------------
 
 in vec3 v_fragment_normal;
 in vec3 v_fragment_position;
@@ -55,6 +55,10 @@ uniform vec3 u_view_position;
 uniform DirectionalLight u_directional_light;
 uniform Material u_material;
 
+#ifdef META_FEATURE_TEXTURE_COORDINATES
+in vec2 v_texture_coordinate;
+#endif
+
 PhongMaterial get_material() {
     PhongMaterial material;
 
@@ -62,8 +66,8 @@ PhongMaterial get_material() {
     material.color_ambient = u_material.color_ambient;
     material.color_diffuse = u_material.color_diffuse;
 #else
-    material.color_ambient = vec3(texture(u_material.texture_diffuse));
-    material.color_diffuse = vec3(texture(u_material.texture_diffuse));
+    material.color_ambient = vec3(texture(u_material.texture_diffuse, v_texture_coordinate));
+    material.color_diffuse = vec3(texture(u_material.texture_diffuse, v_texture_coordinate));
 #endif
 
     material.color_specular = u_material.color_specular;

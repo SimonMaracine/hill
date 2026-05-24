@@ -8,7 +8,7 @@
 #include <glad/gl.h>
 
 namespace hill::debug {
-    static Type severity_type(unsigned int severity) {
+    static Type severity_enum(unsigned int severity) {
         switch (severity) {
             case GL_DEBUG_SEVERITY_HIGH: return Type::Error;
             case GL_DEBUG_SEVERITY_MEDIUM: return Type::Warning;
@@ -77,7 +77,7 @@ namespace hill::debug {
         stream << ' ';
         stream << message;
 
-        debug_output->output_callback(severity_type(severity), stream.str());
+        debug_output->output_callback(severity_enum(severity), stream.str());
     }
 
     static std::unique_ptr<DebugOutput> g_debug_output;

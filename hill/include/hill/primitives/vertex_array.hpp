@@ -43,6 +43,33 @@ namespace hill::vertex_array {
         std::size_t m_size {};
     };
 
+    struct AttributeAuto {
+        AttributeAuto() = default;
+        AttributeAuto(unsigned int index, int components, Type type, bool normalized)
+            : index(index), components(components), type(type), normalized(normalized) {}
+
+        unsigned int index {};
+        int components {};
+        Type type {};
+        bool normalized {};
+    };
+
+    class LayoutAuto {
+    public:
+        using const_pointer = const AttributeAuto*;
+
+        const_pointer begin() const { return m_attributes.data(); }
+        const_pointer end() const { return m_attributes.data() + m_size; }
+        std::size_t size() const { return m_size; }
+        int stride() const { return m_stride; }
+
+        void attribute(const AttributeAuto& attribute);
+    private:
+        std::array<AttributeAuto, 8> m_attributes;
+        std::size_t m_size {};
+        int m_stride {};
+    };
+
     class VertexArray {
     public:
         VertexArray();
@@ -58,6 +85,7 @@ namespace hill::vertex_array {
         void bind() const;
         void unbind() const;
         void configure(std::shared_ptr<vertex_buffer::VertexBuffer> vertex_buffer, const Layout& layout);
+        void configure(std::shared_ptr<vertex_buffer::VertexBuffer> vertex_buffer, const LayoutAuto& layout);
         void configure_and_unbind(std::shared_ptr<element_buffer::ElementBuffer> element_buffer);
     private:
         unsigned int m_vertex_array {};

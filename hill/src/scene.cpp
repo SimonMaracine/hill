@@ -51,7 +51,7 @@ namespace hill::scene {
         current_node->m_local.translation = node->translation;
         current_node->m_local.rotation = node->rotation;
         current_node->m_local.scale = node->scale;
-        current_node->m_raw_meshes.append_range(node->meshes);
+        current_node->m_mesh_sources.append_range(node->meshes);
         current_node->m_meshes = create_meshes(node->meshes);
 
         for (const auto& child : node->children) {
@@ -63,11 +63,11 @@ namespace hill::scene {
         }
     }
 
-    std::vector<Mesh> ModelNode::create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes) {
+    std::vector<Mesh> ModelNode::create_meshes(const std::vector<std::shared_ptr<mesh::MeshSource>>& mesh_sources) {
         std::vector<Mesh> result_meshes;
-        result_meshes.reserve(meshes.size());
+        result_meshes.reserve(mesh_sources.size());
 
-        for (const auto& mesh : meshes) {
+        for (const auto& mesh : mesh_sources) {
             auto& [name, material, aabb] = result_meshes.emplace_back();
             name = mesh->name;
             material = create_material(*mesh);
@@ -77,10 +77,10 @@ namespace hill::scene {
         return result_meshes;
     }
 
-    std::shared_ptr<material::Material> ModelNode::create_material(const mesh::Mesh& mesh) {
+    std::shared_ptr<material::Material> ModelNode::create_material(const mesh::MeshSource& mesh_source) {
         material::MaterialDescription material_description;
 
-        const auto shader_feature_set = renderer_common::choose_shader_feature_set(mesh);
+        const auto shader_feature_set = renderer_common::choose_shader_feature_set(mesh_source);
 
         material_description.add_uniform("u_material.color_ambient", glm::vec3(0.0f));
         material_description.add_uniform("u_material.color_diffuse", glm::vec3(0.0f));

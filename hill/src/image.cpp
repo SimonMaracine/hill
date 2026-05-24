@@ -24,7 +24,7 @@ namespace hill::image {
             &m_width,
             &m_height,
             &m_channels,
-            0
+            STBI_rgb_alpha
         );
 
         if (!m_data) {
@@ -33,9 +33,12 @@ namespace hill::image {
     }
 
     Image::Image(Image&& other) noexcept
-        : m_data(std::exchange(other.m_data, nullptr)) {}
+        : m_width(other.m_width), m_height(other.m_height), m_channels(other.m_channels), m_data(std::exchange(other.m_data, nullptr)) {}
 
     Image& Image::operator=(Image&& other) noexcept {
+        m_width = other.m_width;
+        m_height = other.m_height;
+        m_channels = other.m_channels;
         m_data = std::exchange(other.m_data, nullptr);
         return *this;
     }

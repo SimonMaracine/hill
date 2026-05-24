@@ -69,10 +69,11 @@ namespace hill::renderer {
 
         void configure(scene::ModelNode* node);
 
-        std::shared_ptr<vertex_array::VertexArray> create_vertex_array(const mesh::Mesh& mesh) const;
+        std::shared_ptr<vertex_array::VertexArray> create_vertex_array(const mesh::MeshSource& mesh_source) const;
         std::shared_ptr<shader::Program> create_program(renderer_common::ShaderFeatureSet shader_feature_set) const;
         std::shared_ptr<shader::Program> get_or_create_program(renderer_common::ShaderFeatureSet shader_feature_set);
         std::shared_ptr<material::Material> initialize_material(const mesh::Material& raw_material, std::shared_ptr<material::Material> material);
+        std::shared_ptr<texture2d::Texture2D> get_or_create_texture(mesh::TextureSource texture_source);
         std::vector<std::string> create_vertex_shader_sources(renderer_common::ShaderFeatureSet shader_feature_set) const;
         std::vector<std::string> create_fragment_shader_sources(renderer_common::ShaderFeatureSet shader_feature_set) const;
         static void setup_shader_features(renderer_common::ShaderFeatureSet shader_feature_set, std::vector<std::string>& sources);
@@ -95,6 +96,7 @@ namespace hill::renderer {
 
         std::vector<RenderObject> m_objects;
         std::unordered_map<renderer_common::ShaderFeatureSet, std::weak_ptr<shader::Program>> m_programs;
+        std::unordered_map<mesh::TextureSource, std::weak_ptr<texture2d::Texture2D>> m_textures;
 
         // Runtime scene hierarchy
         std::shared_ptr<scene::RootNode> m_root_node;

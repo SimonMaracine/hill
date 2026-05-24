@@ -41,8 +41,8 @@ namespace hill::texture2d {
         int width() const { return m_width; }
         int height() const { return m_height; }
 
-        void bind(unsigned int unit) const;
-        void unbind(unsigned int unit) const;
+        void bind(unsigned int unit = 0) const;
+        void unbind(unsigned int unit = 0) const;
         void configure(const Specification& specification = {}) const;
         void upload_data(const void* data) const;
     private:

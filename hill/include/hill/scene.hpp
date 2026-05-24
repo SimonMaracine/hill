@@ -89,8 +89,8 @@ namespace hill::scene {
         };
 
         static void traverse(TraversalCtx& ctx, const model::Node* node);
-        static std::vector<Mesh> create_meshes(const std::vector<std::shared_ptr<mesh::Mesh>>& meshes);
-        static std::shared_ptr<material::Material> create_material(const mesh::Mesh& mesh);
+        static std::vector<Mesh> create_meshes(const std::vector<std::shared_ptr<mesh::MeshSource>>& mesh_sources);
+        static std::shared_ptr<material::Material> create_material(const mesh::MeshSource& mesh_source);
 
         struct {
             glm::vec3 translation {};
@@ -98,7 +98,7 @@ namespace hill::scene {
             glm::vec3 scale {1.0f};
         } m_local;
 
-        std::vector<std::shared_ptr<mesh::Mesh>> m_raw_meshes;
+        std::vector<std::shared_ptr<mesh::MeshSource>> m_mesh_sources;
         std::vector<Mesh> m_meshes;
         std::vector<renderer_common::Object> m_render_objects;
         glm::mat4 m_world_transform = glm::identity<glm::mat4>();

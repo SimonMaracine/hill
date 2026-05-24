@@ -22,9 +22,30 @@ namespace hill::vertex_array {
         std::unreachable();
     }
 
+    static constexpr std::size_t type_size(Type type) {
+        switch (type) {
+            case Type::Float:
+                return sizeof(float);
+            case Type::Double:
+                return sizeof(double);
+            case Type::Int:
+                return sizeof(int);
+            case Type::UnsignedInt:
+                return sizeof(unsigned int);
+        }
+
+        std::unreachable();
+    }
+
     void Layout::attribute(const Attribute& attribute) {
         m_attributes[m_size] = attribute;
         m_size++;
+    }
+
+    void LayoutAuto::attribute(const AttributeAuto& attribute) {
+        m_attributes[m_size] = attribute;
+        m_size++;
+        m_stride += attribute.components * int(type_size(attribute.type));
     }
 
     VertexArray::VertexArray() {
@@ -59,6 +80,30 @@ namespace hill::vertex_array {
             );
 
             glEnableVertexAttribArray(attribute->index);
+        }
+
+        vertex_buffer->unbind();
+        m_vertex_buffers.insert(std::move(vertex_buffer));
+    }
+
+    void VertexArray::configure(std::shared_ptr<vertex_buffer::VertexBuffer> vertex_buffer, const LayoutAuto& layout) {
+        vertex_buffer->bind();
+
+        int pointer {};
+
+        for (auto attribute = layout.begin(); attribute != layout.end(); attribute++) {
+            glVertexAttribPointer(
+                attribute->index,
+                attribute->components,
+                type_enum(attribute->type),
+                attribute->normalized,
+                layout.stride(),
+                reinterpret_cast<void*>(pointer)
+            );
+
+            glEnableVertexAttribArray(attribute->index);
+
+            pointer += attribute->components * int(type_size(attribute->type));
         }
 
         vertex_buffer->unbind();

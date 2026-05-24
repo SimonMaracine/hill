@@ -16,7 +16,7 @@ namespace hill::model {
         };
     }
 
-    static std::shared_ptr<image::Image> load_material_texture(const aiMaterial* material, const aiScene* scene, aiTextureType texture_type, TraversalCtx& ctx) {
+    static std::shared_ptr<image::Image> load_material_texture(const aiMaterial* material, const aiScene* scene, aiTextureType texture_type, const utility::FilePath& parent_path, TraversalCtx& ctx) {
         if (material->GetTextureCount(texture_type) == 0) {
             return nullptr;
         }
@@ -45,7 +45,7 @@ namespace hill::model {
         }
 
         utility::Buffer buffer;
-        utility::read_file(std::filesystem::path(path.C_Str()), buffer);
+        utility::read_file(parent_path / std::filesystem::path(path.C_Str()), buffer);
 
         return ctx.processed_textures[path.C_Str()] = std::make_shared<image::Image>(buffer);
     }
@@ -87,6 +87,10 @@ namespace hill::model {
 
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(file_path.string().c_str(), flags);
+
+        if (file_path.has_parent_path()) {
+            m_parent_path = file_path.parent_path();
+        }
 
         load(importer, scene);
     }
@@ -134,7 +138,7 @@ namespace hill::model {
                 continue;
             }
 
-            current_node->meshes.push_back(std::make_shared<mesh::Mesh>(process_mesh(mesh, scene, ctx)));
+            current_node->meshes.push_back(std::make_shared<mesh::MeshSource>(process_mesh(mesh, scene, ctx)));
         }
 
         for (unsigned int i {}; i < node->mNumChildren; i++) {
@@ -144,8 +148,8 @@ namespace hill::model {
         }
     }
 
-    mesh::Mesh Model::process_mesh(const aiMesh* mesh, const aiScene* scene, TraversalCtx& ctx) {
-        mesh::Mesh result_mesh;
+    mesh::MeshSource Model::process_mesh(const aiMesh* mesh, const aiScene* scene, TraversalCtx& ctx) const {
+        mesh::MeshSource result_mesh;
 
         result_mesh.name = mesh->mName.C_Str();
         result_mesh.aabb = aabb(mesh->mAABB);
@@ -212,8 +216,8 @@ namespace hill::model {
         result_mesh.material = load_material_properties(material);
 
         // Handle shared textures, however
-        result_mesh.material.texture_diffuse = load_material_texture(material, scene, aiTextureType_DIFFUSE, ctx);
-        result_mesh.material.texture_specular = load_material_texture(material, scene, aiTextureType_SPECULAR, ctx);
+        result_mesh.material.texture_diffuse = load_material_texture(material, scene, aiTextureType_DIFFUSE, m_parent_path, ctx);
+        result_mesh.material.texture_specular = load_material_texture(material, scene, aiTextureType_SPECULAR, m_parent_path, ctx);
         // result_mesh.material.texture_diffuse = load_material_texture(material, scene, aiTextureType_NORMALS, ctx);
 
         return result_mesh;

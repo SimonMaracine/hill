@@ -24,7 +24,7 @@ namespace hill::model {
         std::vector<std::shared_ptr<Node>> children;
 
         std::string name;
-        std::vector<std::shared_ptr<mesh::Mesh>> meshes;
+        std::vector<std::shared_ptr<mesh::MeshSource>> meshes;
         glm::vec3 translation {};
         glm::quat rotation = glm::identity<glm::quat>();
         glm::vec3 scale {1.0f};
@@ -34,7 +34,7 @@ namespace hill::model {
         std::weak_ptr<Node> current_node;  // Used for propagation
         std::weak_ptr<Node> parent_node;
 
-        std::unordered_map<const aiMesh*, std::shared_ptr<mesh::Mesh>> processed_meshes;
+        std::unordered_map<const aiMesh*, std::shared_ptr<mesh::MeshSource>> processed_meshes;
         std::unordered_map<std::string, std::shared_ptr<image::Image>> processed_textures;
     };
 
@@ -46,10 +46,11 @@ namespace hill::model {
         const Node* root() const { return m_root.get(); }
     private:
         void load(const Assimp::Importer& importer, const aiScene* scene);
-        static void process_node(const aiNode* node, const aiScene* scene, TraversalCtx& ctx);
-        static mesh::Mesh process_mesh(const aiMesh* mesh, const aiScene* scene, TraversalCtx& ctx);
+        void process_node(const aiNode* node, const aiScene* scene, TraversalCtx& ctx);
+        mesh::MeshSource process_mesh(const aiMesh* mesh, const aiScene* scene, TraversalCtx& ctx) const;
 
         std::shared_ptr<Node> m_root;
+        utility::FilePath m_parent_path;
     };
 
     struct ModelError : error::Error {

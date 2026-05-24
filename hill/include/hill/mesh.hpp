@@ -23,6 +23,8 @@ namespace hill::mesh {
         glm::vec2 texture_coordinate {};
     };
 
+    using TextureSource = std::shared_ptr<image::Image>;
+
     struct Material {
         std::string name;
 
@@ -31,11 +33,11 @@ namespace hill::mesh {
         glm::vec3 color_specular {0.6f};
         float shininess = 32.0f;
 
-        std::shared_ptr<image::Image> texture_diffuse;
-        std::shared_ptr<image::Image> texture_specular;
+        TextureSource texture_diffuse;
+        TextureSource texture_specular;
     };
 
-    struct Mesh {
+    struct MeshSource {
         std::string name;
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;

@@ -152,9 +152,9 @@ namespace hill::renderer {
             auto vertex_buffer = std::make_shared<vertex_buffer::VertexBuffer>();
             m_debug_renderer.weak_vertex_buffer = vertex_buffer;
 
-            vertex_array::Layout layout;
-            layout.attribute(vertex_array::Attribute(0, 3, vertex_array::Type::Float, false, (3 + 3) * sizeof(float), 0));
-            layout.attribute(vertex_array::Attribute(1, 3, vertex_array::Type::Float, false, (3 + 3) * sizeof(float), 3 * sizeof(float)));
+            vertex_array::LayoutAuto layout;
+            layout.attribute(vertex_array::AttributeAuto(0, 3, vertex_array::Type::Float, false));
+            layout.attribute(vertex_array::AttributeAuto(1, 3, vertex_array::Type::Float, false));
 
             m_debug_renderer.vertex_array = std::make_shared<vertex_array::VertexArray>();
             m_debug_renderer.vertex_array->bind();
@@ -300,7 +300,7 @@ namespace hill::renderer {
     void Renderer::configure(scene::ModelNode* node) {
         node->m_render_objects.reserve(node->meshes_count());
 
-        for (const auto& [raw_mesh, mesh] : std::views::zip(node->m_raw_meshes, node->m_meshes)) {
+        for (const auto& [raw_mesh, mesh] : std::views::zip(node->m_mesh_sources, node->m_meshes)) {
             renderer_common::Object& object = node->m_render_objects.emplace_back();
             object.elements_count = int(raw_mesh->indices.size());
             object.vertex_array = create_vertex_array(*raw_mesh);
@@ -311,15 +311,29 @@ namespace hill::renderer {
         debug::callback()(debug::Type::Information, std::format("Configured model node {}", static_cast<void*>(node)));
     }
 
-    std::shared_ptr<vertex_array::VertexArray> Renderer::create_vertex_array(const mesh::Mesh& mesh) const {
-        const auto vertices_size = mesh.vertices.size() * (2 * sizeof(glm::vec3));  // TODO
+    std::shared_ptr<vertex_array::VertexArray> Renderer::create_vertex_array(const mesh::MeshSource& mesh_source) const {
+        const auto vertices_size = [&] {
+            auto size = 2 * sizeof(glm::vec3);
+
+            if (mesh_source.vertex_attributes & mesh::TextureCoordinates) {
+                size += sizeof(glm::vec2);
+            }
+
+            return size * mesh_source.vertices.size();
+        }();
+
         const auto vertices = std::make_unique<unsigned char[]>(vertices_size);
 
-        for (std::size_t i {}; const mesh::Vertex& vertex : mesh.vertices) {
+        for (std::size_t i {}; const mesh::Vertex& vertex : mesh_source.vertices) {
             std::memcpy(vertices.get() + i, glm::value_ptr(vertex.position), sizeof(vertex.position));
             i += sizeof(vertex.position);
             std::memcpy(vertices.get() + i, glm::value_ptr(vertex.normal), sizeof(vertex.normal));
             i += sizeof(vertex.normal);
+
+            if (mesh_source.vertex_attributes & mesh::TextureCoordinates) {
+                std::memcpy(vertices.get() + i, glm::value_ptr(vertex.texture_coordinate), sizeof(vertex.texture_coordinate));
+                i += sizeof(vertex.texture_coordinate);
+            }
         }
 
         auto vertex_buffer = std::make_shared<vertex_buffer::VertexBuffer>();
@@ -329,12 +343,16 @@ namespace hill::renderer {
 
         auto element_buffer = std::make_shared<element_buffer::ElementBuffer>();
         element_buffer->bind();
-        element_buffer->upload_data(mesh.indices.data(), mesh.indices.size() * sizeof(unsigned int));
+        element_buffer->upload_data(mesh_source.indices.data(), mesh_source.indices.size() * sizeof(unsigned int));
         element_buffer->unbind();
 
-        vertex_array::Layout layout;
-        layout.attribute(vertex_array::Attribute(0, 3, vertex_array::Type::Float, false, 2 * sizeof(glm::vec3), 0));  // TODO
-        layout.attribute(vertex_array::Attribute(1, 3, vertex_array::Type::Float, false, 2 * sizeof(glm::vec3), sizeof(glm::vec3)));
+        vertex_array::LayoutAuto layout;
+        layout.attribute(vertex_array::AttributeAuto(0, 3, vertex_array::Type::Float, false));
+        layout.attribute(vertex_array::AttributeAuto(1, 3, vertex_array::Type::Float, false));
+
+        if (mesh_source.vertex_attributes & mesh::TextureCoordinates) {
+            layout.attribute(vertex_array::AttributeAuto(3, 2, vertex_array::Type::Float, false));
+        }
 
         const auto vertex_array = std::make_shared<vertex_array::VertexArray>();
         vertex_array->bind();
@@ -390,18 +408,29 @@ namespace hill::renderer {
         }
 
         if (const auto iter = material->m_textures.find("u_material.texture_diffuse"); iter != material->m_textures.end()) {
-            auto texture = std::make_shared<texture2d::Texture2D>(  // FIXME cache
-                texture2d::Format::Rgba8,
-                raw_material.texture_diffuse->width(),
-                raw_material.texture_diffuse->height()
-            );
-
-            texture->upload_data(raw_material.texture_diffuse->data());
-
-            iter->second = std::make_pair(std::move(texture), 0);
+            iter->second = std::make_pair(get_or_create_texture(raw_material.texture_diffuse), 0);
         }
 
         return material;
+    }
+
+    std::shared_ptr<texture2d::Texture2D> Renderer::get_or_create_texture(mesh::TextureSource texture_source) {
+        if (const auto iter = m_textures.find(texture_source); iter != m_textures.end()) {
+            if (const auto texture = iter->second.lock(); texture) {
+                return texture;
+            }
+        }
+
+        const auto texture = std::make_shared<texture2d::Texture2D>(texture2d::Format::Rgba8, texture_source->width(), texture_source->height());
+        texture->bind();
+        texture->upload_data(texture_source->data());
+        texture->unbind();
+
+        m_textures[std::move(texture_source)] = texture;
+
+        debug::callback()(debug::Type::Debug, std::format("Created texture {}", texture->id()));
+
+        return texture;
     }
 
     std::vector<std::string> Renderer::create_vertex_shader_sources(renderer_common::ShaderFeatureSet shader_feature_set) const {

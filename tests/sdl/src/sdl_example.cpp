@@ -18,35 +18,35 @@ static hill::configuration::Configuration make_configuration() {
 
 SdlExample::SdlExample() {
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
-        throw std::runtime_error(std::format("SDL_InitSubSystem: %s", SDL_GetError()));
+        throw std::runtime_error(std::format("SDL_InitSubSystem: {}", SDL_GetError()));
     }
 
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4)) {
-        throw std::runtime_error(std::format("SDL_GL_SetAttribute: %s", SDL_GetError()));
+        throw std::runtime_error(std::format("SDL_GL_SetAttribute: {}", SDL_GetError()));
     }
 
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3)) {
-        throw std::runtime_error(std::format("SDL_GL_SetAttribute: %s", SDL_GetError()));
+        throw std::runtime_error(std::format("SDL_GL_SetAttribute: {}", SDL_GetError()));
     }
 
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE)) {
-        throw std::runtime_error(std::format("SDL_GL_SetAttribute: %s", SDL_GetError()));
+        throw std::runtime_error(std::format("SDL_GL_SetAttribute: {}", SDL_GetError()));
     }
 
     if (!SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG)) {
-        throw std::runtime_error(std::format("SDL_GL_SetAttribute: %s", SDL_GetError()));
+        throw std::runtime_error(std::format("SDL_GL_SetAttribute: {}", SDL_GetError()));
     }
 
     if (!SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1)) {
-        throw std::runtime_error(std::format("SDL_GL_SetAttribute: %s", SDL_GetError()));
+        throw std::runtime_error(std::format("SDL_GL_SetAttribute: {}", SDL_GetError()));
     }
 
     if (!SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24)) {
-        throw std::runtime_error(std::format("SDL_GL_SetAttribute: %s", SDL_GetError()));
+        throw std::runtime_error(std::format("SDL_GL_SetAttribute: {}", SDL_GetError()));
     }
 
     if (!SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1)) {
-        throw std::runtime_error(std::format("SDL_GL_SetAttribute: %s", SDL_GetError()));
+        throw std::runtime_error(std::format("SDL_GL_SetAttribute: {}", SDL_GetError()));
     }
 
     static constexpr unsigned int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE;
@@ -54,13 +54,13 @@ SdlExample::SdlExample() {
     m_window = SDL_CreateWindow("SDL Example", 1280, 720, flags);
 
     if (!m_window) {
-        throw std::runtime_error(std::format("SDL_CreateWindow: %s", SDL_GetError()));
+        throw std::runtime_error(std::format("SDL_CreateWindow: {}", SDL_GetError()));
     }
 
     m_context = SDL_GL_CreateContext(m_window);
 
     if (!m_context) {
-        throw std::runtime_error(std::format("SDL_GL_CreateContext: %s", SDL_GetError()));
+        throw std::runtime_error(std::format("SDL_GL_CreateContext: {}", SDL_GetError()));
     }
 
     hill::graphics_api::initialize(SDL_GL_GetProcAddress);
@@ -135,7 +135,7 @@ void SdlExample::run() {
     std::println("{}", hill::graphics_api::version());
 
     if (!SDL_ShowWindow(m_window)) {
-        throw std::runtime_error(std::format("SDL_ShowWindow: %s", SDL_GetError()));
+        throw std::runtime_error(std::format("SDL_ShowWindow: {}", SDL_GetError()));
     }
 
     hill::utility::Buffer buffer;
@@ -159,6 +159,10 @@ void SdlExample::run() {
     tree->translation(glm::vec3(-12.0f, 1.0f, -8.0f));
     tree->scale(glm::vec3(0.005f));
     m_renderer->root_node()->add(tree);
+
+    auto backpack = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/backpack/backpack.obj")));
+    backpack->translation(glm::vec3(10.0f, 2.0f, 10.0f));
+    m_renderer->root_node()->add(backpack);
 
     auto light = std::make_shared<hill::scene::DirectionalLightNode>("light");
     light->directional_light.direction = glm::normalize(glm::vec3(0.1f, -1.0f, 0.4f));
@@ -186,7 +190,7 @@ void SdlExample::run() {
         m_renderer->render();
 
         if (!SDL_GL_SwapWindow(m_window)) {
-            throw std::runtime_error(std::format("SDL_GL_SwapWindow: %s", SDL_GetError()));
+            throw std::runtime_error(std::format("SDL_GL_SwapWindow: {}", SDL_GetError()));
         }
     }
 }
