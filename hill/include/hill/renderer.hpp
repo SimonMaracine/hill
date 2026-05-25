@@ -116,7 +116,7 @@ namespace hill::renderer {
             std::shared_ptr<shader::Program> program;
         } m_debug_renderer;
 
-        // Performnace data
+        // Performance data
         mutable struct {
             std::chrono::high_resolution_clock::time_point last_time {};
             std::chrono::duration<double> frame_time {};

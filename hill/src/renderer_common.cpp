@@ -8,6 +8,10 @@ namespace hill::renderer_common {
             if (mesh_source.material.texture_diffuse) {
                 shader_feature_set |= ShaderFeatureDiffuseMap;
             }
+
+            if (mesh_source.material.texture_specular) {
+                shader_feature_set |= ShaderFeatureSpecularMap;
+            }
         }
 
         return shader_feature_set;

@@ -40,7 +40,12 @@ struct Material {
     sampler2D texture_diffuse;
 #endif
 
+#ifndef FEATURE_SPECULAR_MAP
     vec3 color_specular;
+#else
+    sampler2D texture_specular;
+#endif
+
     float shininess;
 };
 
@@ -70,7 +75,12 @@ PhongMaterial get_material() {
     material.color_diffuse = vec3(texture(u_material.texture_diffuse, v_texture_coordinate));
 #endif
 
+#ifndef FEATURE_SPECULAR_MAP
     material.color_specular = u_material.color_specular;
+#else
+    material.color_specular = vec3(texture(u_material.texture_specular, v_texture_coordinate));
+#endif
+
     material.shininess = u_material.shininess;
 
     return material;

@@ -31,7 +31,7 @@ namespace hill::editor {
     class Editor {
     public:
         explicit Editor(windowing_system::WindowingSystem& windowing_system);
-        ~Editor();
+        ~Editor() = default;
 
         Editor(const Editor&) = delete;
         Editor& operator=(const Editor&) = delete;

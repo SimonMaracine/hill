@@ -94,6 +94,12 @@ namespace hill::scene {
             material_description.add_texture("u_material.texture_diffuse");
         }
 
+        if (shader_feature_set & renderer_common::ShaderFeatureDiffuseMap) {
+            material_description.remove_uniform("u_material.color_specular");
+
+            material_description.add_texture("u_material.texture_specular");
+        }
+
         return std::make_shared<material::Material>(material_description);
     }
 

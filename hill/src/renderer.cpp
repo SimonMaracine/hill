@@ -46,7 +46,7 @@ namespace hill::renderer {
             m_performance.transform_updates = 0;
         }
 
-        m_camera.projection(m_window_width, m_window_height, 45.0f, 0.01f, 100.0f);
+        m_camera.projection(m_window_width, m_window_height, 45.0f, 0.01f, 200.0f);
         renderer_command::viewport(m_window_width, m_window_height);
 
         renderer_command::clear_color({ m_background_color[0], m_background_color[1], m_background_color[2], 1.0f });
@@ -411,6 +411,10 @@ namespace hill::renderer {
             iter->second = std::make_pair(get_or_create_texture(raw_material.texture_diffuse), 0);
         }
 
+        if (const auto iter = material->m_textures.find("u_material.texture_specular"); iter != material->m_textures.end()) {
+            iter->second = std::make_pair(get_or_create_texture(raw_material.texture_specular), 1);
+        }
+
         return material;
     }
 
@@ -454,42 +458,46 @@ namespace hill::renderer {
     }
 
     void Renderer::setup_shader_features(renderer_common::ShaderFeatureSet shader_feature_set, std::vector<std::string>& sources) {
+        const auto define = [](const char* name) {
+            return std::format("#define {}\n", name);
+        };
+
         bool texture_coordinates {};
 
         if (shader_feature_set & renderer_common::ShaderFeatureVertexColors) {
-            sources.push_back("#define FEATURE_VERTEX_COLORS\n");
+            sources.push_back(define("FEATURE_VERTEX_COLORS"));
         }
 
         if (shader_feature_set & renderer_common::ShaderFeatureDiffuseMap) {
-            sources.push_back("#define FEATURE_DIFFUSE_MAP\n");
+            sources.push_back(define("FEATURE_DIFFUSE_MAP"));
             texture_coordinates = true;
         }
 
         if (shader_feature_set & renderer_common::ShaderFeatureSpecularMap) {
-            sources.push_back("#define FEATURE_SPECULAR_MAP\n");
+            sources.push_back(define("FEATURE_SPECULAR_MAP"));
             texture_coordinates = true;
         }
 
         if (shader_feature_set & renderer_common::ShaderFeatureNormalMap) {
-            sources.push_back("#define FEATURE_NORMAL_MAP\n");
+            sources.push_back(define("FEATURE_NORMAL_MAP"));
             texture_coordinates = true;
         }
 
         if (shader_feature_set & renderer_common::ShaderFeatureEmissionMap) {
-            sources.push_back("#define FEATURE_EMISSION_MAP\n");
+            sources.push_back(define("FEATURE_EMISSION_MAP"));
             texture_coordinates = true;
         }
 
         if (shader_feature_set & renderer_common::ShaderFeatureFog) {
-            sources.push_back("#define FEATURE_FOG\n");
+            sources.push_back(define("FEATURE_FOG"));
         }
 
         if (shader_feature_set & renderer_common::ShaderFeatureShadow) {
-            sources.push_back("#define FEATURE_SHADOW\n");
+            sources.push_back(define("FEATURE_SHADOW"));
         }
 
         if (texture_coordinates) {
-            sources.push_back("#define META_FEATURE_TEXTURE_COORDINATES\n");
+            sources.push_back(define("META_FEATURE_TEXTURE_COORDINATES"));
         }
     }
 }

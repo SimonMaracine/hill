@@ -37,10 +37,6 @@ namespace hill::editor {
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     }
 
-    Editor::~Editor() {
-        // FIXME anything?
-    }
-
     void Editor::update(renderer::Renderer& renderer) {
         ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
@@ -189,7 +185,8 @@ namespace hill::editor {
 
         path += node->name().data() + "/"s;
 
-        static constexpr auto flags = ImGuiTreeNodeFlags_DrawLinesFull | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen;
+        static constexpr auto flags =
+            ImGuiTreeNodeFlags_DrawLinesFull | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen;
         const bool selected = m_inspectable == node->shared_from_this();
 
         const bool open = ImGui::TreeNodeEx(
@@ -288,16 +285,22 @@ namespace hill::editor {
             ImGui::DragFloat3("Diffuse", glm::value_ptr(iter->second), 0.01f, 0.0f, 1.0f);
         }
 
+        if (const auto iter = material.m_textures.find("u_material.texture_diffuse"); iter != material.m_textures.end()) {
+            char buffer[16] {};  // FIXME
+            ImGui::InputText("Diffuse", buffer, sizeof(buffer));
+        }
+
         if (const auto iter = material.m_floats3.find("u_material.color_specular"); iter != material.m_floats3.end()) {
             ImGui::DragFloat3("Specular", glm::value_ptr(iter->second), 0.01f, 0.0f, 1.0f);
         }
 
-        if (const auto iter = material.m_floats1.find("u_material.shininess"); iter != material.m_floats1.end()) {
-            ImGui::DragFloat("Shininess", &iter->second, 1.0f, 1.0f, 512.0f);
+        if (const auto iter = material.m_textures.find("u_material.texture_specular"); iter != material.m_textures.end()) {
+            char buffer[16] {};  // FIXME
+            ImGui::InputText("Specular", buffer, sizeof(buffer));
         }
 
-        if (const auto iter = material.m_textures.find("u_material.texture_diffuse"); iter != material.m_textures.end()) {
-            ImGui::Text("Diffuse");
+        if (const auto iter = material.m_floats1.find("u_material.shininess"); iter != material.m_floats1.end()) {
+            ImGui::DragFloat("Shininess", &iter->second, 1.0f, 1.0f, 512.0f);
         }
     }
 
