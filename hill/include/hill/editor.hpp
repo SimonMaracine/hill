@@ -18,6 +18,7 @@ namespace hill::scene {
     class RootNode;
     class ModelNode;
     class DirectionalLightNode;
+    class PointLightNode;
 }
 
 namespace hill::editor {
@@ -55,6 +56,7 @@ namespace hill::editor {
         void inspect(scene::RootNode* node);
         void inspect(scene::ModelNode* node);
         void inspect(scene::DirectionalLightNode* node);
+        void inspect(scene::PointLightNode* node);
         void inspect(ModelMesh* mesh);
 
         void nodes(scene::ModelNode* node);
@@ -94,6 +96,7 @@ namespace hill::editor {
         friend class scene::RootNode;
         friend class scene::ModelNode;
         friend class scene::DirectionalLightNode;
+        friend class scene::PointLightNode;
         friend struct ModelMesh;
     };
 }

@@ -266,6 +266,23 @@ namespace hill::editor {
         ImGui::DragFloat3("Specular", glm::value_ptr(node->directional_light.specular_color), 0.01f, 0.0f, 1.0f);
     }
 
+    void Editor::inspect(scene::PointLightNode* node) {
+        ImGui::SeparatorText("Point Light");
+
+        if (input_text("Name", m_buffer_name, sizeof(m_buffer_name))) {
+            node->m_name = m_buffer_name;
+        }
+
+        separator();
+
+        ImGui::DragFloat3("Position", glm::value_ptr(node->point_light.position), 0.1f);
+        ImGui::DragFloat3("Ambient", glm::value_ptr(node->point_light.ambient_color), 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat3("Diffuse", glm::value_ptr(node->point_light.diffuse_color), 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat3("Specular", glm::value_ptr(node->point_light.specular_color), 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("Linear", &node->point_light.linear, 0.001f, 0.0f, 1.0f);
+        ImGui::DragFloat("Quadratic", &node->point_light.quadratic, 0.0001f, 0.0f, 1.0f);
+    }
+
     void Editor::inspect(ModelMesh* mesh) {
         ImGui::SeparatorText("Mesh");
 

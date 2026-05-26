@@ -57,9 +57,15 @@ namespace hill::renderer {
                 program->use();
                 program->upload_uniform_float16("u_projection_view", m_camera.projection_view());
                 program->upload_uniform_float3("u_directional_light.direction", m_directional_light.direction);
-                program->upload_uniform_float3("u_directional_light.color_ambient", m_directional_light.ambient_color);
-                program->upload_uniform_float3("u_directional_light.color_diffuse", m_directional_light.diffuse_color);
-                program->upload_uniform_float3("u_directional_light.color_specular", m_directional_light.specular_color);
+                program->upload_uniform_float3("u_directional_light.color.ambient", m_directional_light.ambient_color);
+                program->upload_uniform_float3("u_directional_light.color.diffuse", m_directional_light.diffuse_color);
+                program->upload_uniform_float3("u_directional_light.color.specular", m_directional_light.specular_color);
+                program->upload_uniform_float3("u_point_light.position", m_point_light.position);
+                program->upload_uniform_float3("u_point_light.color.ambient", m_point_light.ambient_color);
+                program->upload_uniform_float3("u_point_light.color.diffuse", m_point_light.diffuse_color);
+                program->upload_uniform_float3("u_point_light.color.specular", m_point_light.specular_color);
+                program->upload_uniform_float1("u_point_light.linear", m_point_light.linear);
+                program->upload_uniform_float1("u_point_light.quadratic", m_point_light.quadratic);
                 program->upload_uniform_float3("u_view_position", m_camera.position());
                 program->unuse();
             }
@@ -277,6 +283,10 @@ namespace hill::renderer {
 
     void Renderer::render_node(TraversalCtx& ctx, scene::DirectionalLightNode* node) {
         m_directional_light = node->directional_light;
+    }
+
+    void Renderer::render_node(TraversalCtx& ctx, scene::PointLightNode* node) {
+        m_point_light = node->point_light;
     }
 
     void Renderer::submit(const RenderObject& object) {

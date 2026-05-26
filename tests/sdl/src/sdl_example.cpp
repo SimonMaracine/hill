@@ -144,29 +144,33 @@ void SdlExample::run() {
     auto teapot = hill::scene::ModelNode::from_model(hill::model::Model(buffer));
     teapot->translation(glm::vec3(7.0f, 2.0f, -7.0f));
     teapot->rotation(glm::vec3(0.0f, -30.0f, 0.0f));
-    m_renderer->root_node()->add(teapot);
+    m_renderer->root_node()->child(teapot);
 
     auto heart = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/heart/heart.obj")));
     heart->translation(glm::vec3(-2.0f, 3.0f, 7.0f));
     heart->rotation(glm::vec3(-60.0f, 0.0f, 0.0f));
     heart->scale(glm::vec3(0.3f, 0.3f, 0.3f));
-    m_renderer->root_node()->add(heart);
+    m_renderer->root_node()->child(heart);
 
     auto cube = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/cube/cube.glb")));
-    m_renderer->root_node()->add(cube);
+    m_renderer->root_node()->child(cube);
 
     auto tree = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/tree.fbx")));
     tree->translation(glm::vec3(-12.0f, 1.0f, -8.0f));
     tree->scale(glm::vec3(0.005f));
-    m_renderer->root_node()->add(tree);
+    m_renderer->root_node()->child(tree);
 
     auto backpack = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/backpack/backpack.obj")));
     backpack->translation(glm::vec3(10.0f, 2.0f, 10.0f));
-    m_renderer->root_node()->add(backpack);
+    m_renderer->root_node()->child(backpack);
 
-    auto light = std::make_shared<hill::scene::DirectionalLightNode>("light");
-    light->directional_light.direction = glm::normalize(glm::vec3(0.1f, -1.0f, 0.4f));
-    m_renderer->root_node()->add(light);
+    auto sun = std::make_shared<hill::scene::DirectionalLightNode>("Sun");
+    sun->directional_light.direction = glm::normalize(glm::vec3(0.1f, -1.0f, 0.4f));
+    m_renderer->root_node()->child(sun);
+
+    auto light = std::make_shared<hill::scene::PointLightNode>("Light");
+    light->point_light.position = glm::vec3(1.0f, 1.0f, 0.0f);
+    m_renderer->root_node()->child(light);
 
     while (m_running) {
         SDL_Event event;

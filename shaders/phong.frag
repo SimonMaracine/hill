@@ -1,8 +1,19 @@
+struct BaseColoredLight {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+
 struct DirectionalLight {
     vec3 direction;
-    vec3 color_ambient;
-    vec3 color_diffuse;
-    vec3 color_specular;
+    BaseColoredLight color;
+};
+
+struct PointLight {
+    vec3 position;
+    BaseColoredLight color;
+    float linear;
+    float quadratic;
 };
 
 struct PhongMaterial {
@@ -12,24 +23,91 @@ struct PhongMaterial {
     float shininess;
 };
 
-vec3 phong(DirectionalLight directional_light, PhongMaterial material, vec3 fragment_position, vec3 fragment_normal, vec3 view_position) {
-    fragment_normal = normalize(fragment_normal);
-    const vec3 light_direction = normalize(-directional_light.direction);
-    const vec3 view_direction = normalize(view_position - fragment_position);
-    const vec3 reflection_direction = reflect(-light_direction, fragment_normal);
-
+void phong(
+    BaseColoredLight light,
+    PhongMaterial material,
+    vec3 fragment_position,
+    vec3 fragment_normal,
+    vec3 view_position,
+    vec3 light_direction,
+    vec3 view_direction,
+    vec3 reflection_direction,
+    out vec3 ambient_light,
+    out vec3 diffuse_light,
+    out vec3 specular_light
+) {
     // Ambient
-    const vec3 ambient_light = directional_light.color_ambient * material.color_ambient;
+    ambient_light = light.ambient * material.color_ambient;
 
     // Diffuse
     const float diffuse_strength = max(dot(fragment_normal, light_direction), 0.0);
-    const vec3 diffuse_light = diffuse_strength * directional_light.color_diffuse * material.color_diffuse;
+    diffuse_light = diffuse_strength * light.diffuse * material.color_diffuse;
 
     // Specular
     const float specular_strength = pow(max(dot(view_direction, reflection_direction), 0.0), material.shininess);
-    const vec3 specular_light = specular_strength * directional_light.color_specular * material.color_specular;
+    specular_light = specular_strength * light.specular * material.color_specular;
+}
 
-    return ambient_light + diffuse_light + specular_light;
+vec3 phong(DirectionalLight directional_light, PointLight point_light, PhongMaterial material, vec3 fragment_position, vec3 fragment_normal, vec3 view_position) {
+    fragment_normal = normalize(fragment_normal);
+    const vec3 view_direction = normalize(view_position - fragment_position);
+
+    const float distance = length(point_light.position - fragment_position);
+    const float attenuation = 1.0 / (1.0 + point_light.linear * distance + point_light.quadratic * distance * distance);
+
+    vec3 directional_light_contribution;
+    {
+        vec3 ambient_light;
+        vec3 diffuse_light;
+        vec3 specular_light;
+
+        const vec3 light_direction = normalize(-directional_light.direction);
+        const vec3 reflection_direction = reflect(-light_direction, fragment_normal);
+
+        phong(
+            directional_light.color,
+            material,
+            fragment_position,
+            fragment_normal,
+            view_position,
+            light_direction,
+            view_direction,
+            reflection_direction,
+            ambient_light,
+            diffuse_light,
+            specular_light
+        );
+
+        directional_light_contribution = ambient_light + diffuse_light + specular_light;
+    }
+
+    vec3 point_light_contribution;
+    {
+        vec3 ambient_light;
+        vec3 diffuse_light;
+        vec3 specular_light;
+
+        const vec3 light_direction = normalize(point_light.position - fragment_position);
+        const vec3 reflection_direction = reflect(-light_direction, fragment_normal);
+
+        phong(
+            point_light.color,
+            material,
+            fragment_position,
+            fragment_normal,
+            view_position,
+            light_direction,
+            view_direction,
+            reflection_direction,
+            ambient_light,
+            diffuse_light,
+            specular_light
+        );
+
+        point_light_contribution = (ambient_light + diffuse_light + specular_light) * attenuation;
+    }
+
+    return directional_light_contribution + point_light_contribution;
 }
 
 struct Material {
@@ -58,6 +136,7 @@ layout(location = 0) out vec4 o_color;
 
 uniform vec3 u_view_position;
 uniform DirectionalLight u_directional_light;
+uniform PointLight u_point_light;
 uniform Material u_material;
 
 #ifdef META_FEATURE_TEXTURE_COORDINATES
@@ -87,6 +166,6 @@ PhongMaterial get_material() {
 }
 
 void main() {
-    const vec3 color = phong(u_directional_light, get_material(), v_fragment_position, v_fragment_normal, u_view_position);
+    const vec3 color = phong(u_directional_light, u_point_light, get_material(), v_fragment_position, v_fragment_normal, u_view_position);
     o_color = vec4(color, 1.0);
 }

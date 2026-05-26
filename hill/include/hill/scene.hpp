@@ -38,7 +38,10 @@ namespace hill::scene {
 
         const std::string& name() const { return m_name; }
 
-        void add(std::shared_ptr<Node> child);
+        void child(std::shared_ptr<Node> child);
+        void parent(std::shared_ptr<Node> parent);  // TODO test
+        std::shared_ptr<Node> parent() const;
+        void detach();
     protected:
         std::string m_name;
         std::weak_ptr<Node> m_parent;
@@ -118,6 +121,19 @@ namespace hill::scene {
         void editor_inspect(editor::Editor& editor) override;
 
         light::DirectionalLight directional_light;
+    private:
+        friend class renderer::Renderer;
+    };
+
+    class PointLightNode : public Node {
+    public:
+        explicit PointLightNode(std::string name, const light::PointLight& point_light = {})
+            : Node(std::move(name)), point_light(point_light) {}
+
+        void renderer_process(renderer::Renderer& renderer, renderer::TraversalCtx& ctx) override;
+        void editor_inspect(editor::Editor& editor) override;
+
+        light::PointLight point_light;
     private:
         friend class renderer::Renderer;
     };

@@ -4,10 +4,25 @@
 #include "hill/editor.hpp"
 
 namespace hill::scene {
-    void Node::add(std::shared_ptr<Node> child) {
+    void Node::child(std::shared_ptr<Node> child) {
         const auto name = child->m_name;
         child->m_parent = weak_from_this();
         m_children[name] = std::move(child);
+    }
+
+    void Node::parent(std::shared_ptr<Node> parent) {
+        parent->m_children[m_name] = shared_from_this();
+        m_parent = std::move(parent);
+    }
+
+    std::shared_ptr<Node> Node::parent() const {
+        return m_parent.lock();
+    }
+
+    void Node::detach() {
+        const auto parent = m_parent.lock();
+        parent->m_children.erase(m_name);
+        m_parent.reset();
     }
 
     void RootNode::renderer_process(renderer::Renderer& renderer, renderer::TraversalCtx& ctx) {
@@ -59,7 +74,7 @@ namespace hill::scene {
             ctx.current_node = child_node;
             traverse(ctx, child.get());
 
-            current_node->add(child_node);
+            current_node->child(child_node);
         }
     }
 
@@ -94,7 +109,7 @@ namespace hill::scene {
             material_description.add_texture("u_material.texture_diffuse");
         }
 
-        if (shader_feature_set & renderer_common::ShaderFeatureDiffuseMap) {
+        if (shader_feature_set & renderer_common::ShaderFeatureSpecularMap) {
             material_description.remove_uniform("u_material.color_specular");
 
             material_description.add_texture("u_material.texture_specular");
@@ -108,6 +123,14 @@ namespace hill::scene {
     }
 
     void DirectionalLightNode::editor_inspect(editor::Editor& editor) {
+        editor.inspect(this);
+    }
+
+    void PointLightNode::renderer_process(renderer::Renderer& renderer, renderer::TraversalCtx& ctx) {
+        renderer.render_node(ctx, this);
+    }
+
+    void PointLightNode::editor_inspect(editor::Editor& editor) {
         editor.inspect(this);
     }
 }
