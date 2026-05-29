@@ -29,6 +29,7 @@ target_sources(
         "src/renderer_command.cpp"
         "src/renderer_common.cpp"
         "src/scene.cpp"
+        "src/task_manager.cpp"
         "src/utility.cpp"
     PUBLIC
         FILE_SET HEADERS
@@ -61,8 +62,9 @@ target_sources(
             "include/hill/renderer_command.hpp"
             "include/hill/renderer_common.hpp"
             "include/hill/scene.hpp"
+            "include/hill/task_manager.hpp"
             "include/hill/utility.hpp"
-            "include/hill/windowing_system.hpp"
+            "include/hill/windowing.hpp"
 )
 
 target_link_libraries(hill PRIVATE glad stb_image assimp::assimp)

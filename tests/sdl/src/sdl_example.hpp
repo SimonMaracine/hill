@@ -5,7 +5,7 @@
 
 struct SDL_Window;
 
-class SdlExample : public hill::imgui::ImGui, public hill::windowing_system::WindowingSystem {
+class SdlExample : public hill::imgui::ImGui, public hill::windowing::Windowing {
 public:
     SdlExample();
     ~SdlExample() override;
@@ -21,8 +21,8 @@ public:
     void imgui_end(ImDrawData* draw_data) const override;
     void imgui_update() override;
 
-    void windowing_system_grab_mouse() const override;
-    void windowing_system_ungrab_mouse() const override;
+    void windowing_grab_mouse() const override;
+    void windowing_ungrab_mouse() const override;
 
     void run();
 private:

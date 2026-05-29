@@ -4,6 +4,7 @@
 #include <chrono>
 #include <vector>
 #include <unordered_map>
+#include <optional>
 
 #include "hill/configuration.hpp"
 #include "hill/imgui.hpp"
@@ -13,6 +14,7 @@
 #include "hill/material.hpp"
 #include "hill/renderer_common.hpp"
 #include "hill/aabb.hpp"
+#include "hill/task_manager.hpp"
 #include "hill/glm.h++"
 
 namespace hill::editor {
@@ -65,10 +67,10 @@ namespace hill::renderer {
         void render_node(TraversalCtx& ctx, scene::PointLightNode* node);
 
         void submit(const RenderObject& object);
-
         void draw_object(const RenderObject& object) const;
 
         void configure(scene::ModelNode* node);
+        void upload_program_shared_uniform_data();
 
         std::shared_ptr<vertex_array::VertexArray> create_vertex_array(const mesh::MeshSource& mesh_source) const;
         std::shared_ptr<shader::Program> create_program(renderer_common::ShaderFeatureSet shader_feature_set) const;
@@ -78,6 +80,9 @@ namespace hill::renderer {
         std::vector<std::string> create_vertex_shader_sources(renderer_common::ShaderFeatureSet shader_feature_set) const;
         std::vector<std::string> create_fragment_shader_sources(renderer_common::ShaderFeatureSet shader_feature_set) const;
         static void setup_shader_features(renderer_common::ShaderFeatureSet shader_feature_set, std::vector<std::string>& sources);
+
+        // Utility systems
+        task_manager::TaskManager m_task_manager;  // Updated at the end of every frame
 
         // Client input
         imgui::ImGui* m_imgui {};
@@ -93,8 +98,8 @@ namespace hill::renderer {
         glm::vec3 m_background_color {0.6f, 0.6f, 0.7f};
 
         camera::Camera m_camera;
-        light::DirectionalLight m_directional_light;
-        light::PointLight m_point_light;
+        std::optional<light::DirectionalLight> m_directional_light;
+        std::vector<light::PointLight> m_point_lights;
 
         std::vector<RenderObject> m_objects;
         std::unordered_map<renderer_common::ShaderFeatureSet, std::weak_ptr<shader::Program>> m_programs;

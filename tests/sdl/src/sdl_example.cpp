@@ -119,13 +119,13 @@ void SdlExample::imgui_update() {
     m_editor->update_camera(*m_renderer);
 }
 
-void SdlExample::windowing_system_grab_mouse() const {
+void SdlExample::windowing_grab_mouse() const {
     if (!SDL_SetWindowRelativeMouseMode(m_window, true)) {
         std::println(stderr, "SDL_SetWindowRelativeMouseMode: {}", SDL_GetError());
     }
 }
 
-void SdlExample::windowing_system_ungrab_mouse() const {
+void SdlExample::windowing_ungrab_mouse() const {
     if (!SDL_SetWindowRelativeMouseMode(m_window, false)) {
         std::println(stderr, "SDL_SetWindowRelativeMouseMode: {}", SDL_GetError());
     }
@@ -171,6 +171,10 @@ void SdlExample::run() {
     auto light = std::make_shared<hill::scene::PointLightNode>("Light");
     light->point_light.position = glm::vec3(1.0f, 1.0f, 0.0f);
     m_renderer->root_node()->child(light);
+
+    auto light2 = std::make_shared<hill::scene::PointLightNode>("Light2");
+    light2->point_light.position = glm::vec3(-5.0f, 1.0f, 0.0f);
+    m_renderer->root_node()->child(light2);
 
     while (m_running) {
         SDL_Event event;

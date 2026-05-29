@@ -31,8 +31,8 @@ namespace hill::editor {
         editor.inspect(this);
     }
 
-    Editor::Editor(windowing_system::WindowingSystem& windowing_system)
-        : m_windowing_system(&windowing_system) {
+    Editor::Editor(windowing::Windowing& windowing)
+        : m_windowing(&windowing) {
         auto& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     }
@@ -58,12 +58,12 @@ namespace hill::editor {
 
         if (!ImGui::GetIO().WantCaptureMouse) {
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-                m_windowing_system->windowing_system_grab_mouse();
+                m_windowing->windowing_grab_mouse();
                 m_camera.control = true;
             }
 
             if (ImGui::IsMouseReleased(ImGuiMouseButton_Right)) {
-                m_windowing_system->windowing_system_ungrab_mouse();
+                m_windowing->windowing_ungrab_mouse();
                 m_camera.control = false;
             }
 
@@ -174,14 +174,16 @@ namespace hill::editor {
 
     void Editor::scene_hierarchy(renderer::Renderer& renderer) {
         if (ImGui::Begin("Scene Hierarchy")) {
-            scene_hierarchy_tree(renderer.root_node(), "");
+            scene_hierarchy_tree(renderer, renderer.root_node(), "");
         }
 
         ImGui::End();
     }
 
-    void Editor::scene_hierarchy_tree(scene::Node* node, std::string path) {
+    void Editor::scene_hierarchy_tree(renderer::Renderer& renderer, scene::Node* node, std::string path) {
         using namespace std::string_literals;
+
+        const bool is_root = node->name().empty();
 
         path += node->name().data() + "/"s;
 
@@ -193,16 +195,32 @@ namespace hill::editor {
             path.c_str(),
             flags | (selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None),
             "%s",
-            node->name().empty() ? "/" : node->name().data()
+            is_root ? "/" : node->name().data()
         );
 
         if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
             set_inspectable(node->shared_from_this(), node->shared_from_this()->name());
         }
 
+        if (!is_root && ImGui::BeginPopupContextItem()) {
+            ImGui::Text("%s", node->name().c_str());
+            ImGui::Separator();
+
+            if (ImGui::Button("Delete Node")) {
+                renderer.m_task_manager.add_immediate_task([this, node = node->shared_from_this()] {
+                    node->detach();
+                    m_inspectable.reset();  // FIXME only reset this, if the selected node is dropped
+                });
+
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+
         if (open) {
             for (const auto& child : node->m_children | std::views::values) {
-                scene_hierarchy_tree(child.get(), path);
+                scene_hierarchy_tree(renderer, child.get(), path);
             }
 
             node->editor_nodes(*this);

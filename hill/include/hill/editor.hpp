@@ -4,7 +4,7 @@
 #include <string>
 
 #include "hill/editor_common.hpp"
-#include "hill/windowing_system.hpp"
+#include "hill/windowing.hpp"
 #include "hill/material.hpp"
 #include "hill/aabb.hpp"
 #include "hill/glm.h++"
@@ -31,7 +31,7 @@ namespace hill::editor {
 
     class Editor {
     public:
-        explicit Editor(windowing_system::WindowingSystem& windowing_system);
+        explicit Editor(windowing::Windowing& windowing);
         ~Editor() = default;
 
         Editor(const Editor&) = delete;
@@ -50,7 +50,7 @@ namespace hill::editor {
         void primitives_object(const char* label, const auto& objects);
 
         void scene_hierarchy(renderer::Renderer& renderer);
-        void scene_hierarchy_tree(scene::Node* node, std::string path);
+        void scene_hierarchy_tree(renderer::Renderer& renderer, scene::Node* node, std::string path);
 
         void inspector(renderer::Renderer& renderer);
         void inspect(scene::RootNode* node);
@@ -72,7 +72,7 @@ namespace hill::editor {
         void set_inspectable(std::shared_ptr<editor_common::Inspectable> inspectable, const std::string& name);
         static glm::mat4 ancestor_world_transform(std::shared_ptr<scene::Node> node);
 
-        windowing_system::WindowingSystem* m_windowing_system {};
+        windowing::Windowing* m_windowing {};
 
         struct Camera {
             static constexpr glm::vec3 UP {0.0f, 1.0f, 0.0f};

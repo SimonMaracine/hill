@@ -52,25 +52,6 @@ namespace hill::renderer {
         renderer_command::clear_color({ m_background_color[0], m_background_color[1], m_background_color[2], 1.0f });
         renderer_command::clear(renderer_command::Buffers::CD);
 
-        for (const auto& weak_program : m_programs | std::views::values) {
-            if (const auto program = weak_program.lock(); program) {
-                program->use();
-                program->upload_uniform_float16("u_projection_view", m_camera.projection_view());
-                program->upload_uniform_float3("u_directional_light.direction", m_directional_light.direction);
-                program->upload_uniform_float3("u_directional_light.color.ambient", m_directional_light.ambient_color);
-                program->upload_uniform_float3("u_directional_light.color.diffuse", m_directional_light.diffuse_color);
-                program->upload_uniform_float3("u_directional_light.color.specular", m_directional_light.specular_color);
-                program->upload_uniform_float3("u_point_light.position", m_point_light.position);
-                program->upload_uniform_float3("u_point_light.color.ambient", m_point_light.ambient_color);
-                program->upload_uniform_float3("u_point_light.color.diffuse", m_point_light.diffuse_color);
-                program->upload_uniform_float3("u_point_light.color.specular", m_point_light.specular_color);
-                program->upload_uniform_float1("u_point_light.linear", m_point_light.linear);
-                program->upload_uniform_float1("u_point_light.quadratic", m_point_light.quadratic);
-                program->upload_uniform_float3("u_view_position", m_camera.position());
-                program->unuse();
-            }
-        }
-
         TraversalCtx ctx;
         render_begin();
         render_traverse_tree(ctx, m_root_node.get());
@@ -78,6 +59,8 @@ namespace hill::renderer {
 
         debug_render();
         imgui_render();
+
+        m_task_manager.update();
     }
 
     void Renderer::window_resize(int width, int height) {
@@ -235,11 +218,15 @@ namespace hill::renderer {
     }
 
     void Renderer::render_end() {
+        upload_program_shared_uniform_data();
+
         for (const RenderObject& object : m_objects) {
             draw_object(object);
         }
 
         m_objects.clear();
+        m_directional_light = std::nullopt;
+        m_point_lights.clear();
     }
 
     void Renderer::render_traverse_tree(TraversalCtx& ctx, scene::Node* node) {
@@ -286,7 +273,11 @@ namespace hill::renderer {
     }
 
     void Renderer::render_node(TraversalCtx& ctx, scene::PointLightNode* node) {
-        m_point_light = node->point_light;
+        if (m_point_lights.size() >= 8) {
+            return;
+        }
+
+        m_point_lights.push_back(node->point_light);
     }
 
     void Renderer::submit(const RenderObject& object) {
@@ -319,6 +310,40 @@ namespace hill::renderer {
         }
 
         debug::callback()(debug::Type::Information, std::format("Configured model node {}", static_cast<void*>(node)));
+    }
+
+    void Renderer::upload_program_shared_uniform_data() {
+        for (const auto& weak_program : m_programs | std::views::values) {
+            if (const auto program = weak_program.lock(); program) {
+                program->use();
+                program->upload_uniform_float16("u_projection_view", m_camera.projection_view());
+
+                if (m_directional_light) {
+                    program->upload_uniform_float3("u_directional_light.color.ambient", m_directional_light->ambient_color);
+                    program->upload_uniform_float3("u_directional_light.color.diffuse", m_directional_light->diffuse_color);
+                    program->upload_uniform_float3("u_directional_light.color.specular", m_directional_light->specular_color);
+                    program->upload_uniform_float3("u_directional_light.direction", m_directional_light->direction);
+                } else {
+                    program->upload_uniform_float3("u_directional_light.color.ambient", glm::vec3());
+                    program->upload_uniform_float3("u_directional_light.color.diffuse", glm::vec3());
+                    program->upload_uniform_float3("u_directional_light.color.specular", glm::vec3());
+                    program->upload_uniform_float3("u_directional_light.direction", glm::vec3());
+                }
+
+                for (const auto& [i, point_light] : m_point_lights | std::views::enumerate) {
+                    program->upload_uniform_float3(std::format("u_point_lights.elements[{}].color.ambient", i), point_light.ambient_color);
+                    program->upload_uniform_float3(std::format("u_point_lights.elements[{}].color.diffuse", i), point_light.diffuse_color);
+                    program->upload_uniform_float3(std::format("u_point_lights.elements[{}].color.specular", i), point_light.specular_color);
+                    program->upload_uniform_float3(std::format("u_point_lights.elements[{}].position", i), point_light.position);
+                    program->upload_uniform_float1(std::format("u_point_lights.elements[{}].linear", i), point_light.linear);
+                    program->upload_uniform_float1(std::format("u_point_lights.elements[{}].quadratic", i), point_light.quadratic);
+                }
+                program->upload_uniform_uint1("u_point_lights.count", static_cast<unsigned int>(m_point_lights.size()));
+
+                program->upload_uniform_float3("u_view_position", m_camera.position());
+                program->unuse();
+            }
+        }
     }
 
     std::shared_ptr<vertex_array::VertexArray> Renderer::create_vertex_array(const mesh::MeshSource& mesh_source) const {
