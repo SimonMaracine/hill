@@ -133,4 +133,12 @@ namespace hill::scene {
     void PointLightNode::editor_inspect(editor::Editor& editor) {
         editor.inspect(this);
     }
+
+    void SpotLightNode::renderer_process(renderer::Renderer& renderer, renderer::TraversalCtx& ctx) {
+        renderer.render_node(ctx, this);
+    }
+
+    void SpotLightNode::editor_inspect(editor::Editor& editor) {
+        editor.inspect(this);
+    }
 }

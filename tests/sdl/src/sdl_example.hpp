@@ -26,8 +26,13 @@ public:
 
     void run();
 private:
+    void initialize();
+    void update();
+
     std::unique_ptr<hill::renderer::Renderer> m_renderer;
     std::unique_ptr<hill::editor::Editor> m_editor;
+
+    std::shared_ptr<hill::scene::SpotLightNode> m_spotlight;
 
     SDL_Window* m_window {};
     void* m_context {};

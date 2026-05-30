@@ -227,6 +227,7 @@ namespace hill::renderer {
         m_objects.clear();
         m_directional_light = std::nullopt;
         m_point_lights.clear();
+        m_spot_lights.clear();
     }
 
     void Renderer::render_traverse_tree(TraversalCtx& ctx, scene::Node* node) {
@@ -278,6 +279,14 @@ namespace hill::renderer {
         }
 
         m_point_lights.push_back(node->point_light);
+    }
+
+    void Renderer::render_node(TraversalCtx& ctx, scene::SpotLightNode* node) {
+        if (m_spot_lights.size() >= 8) {
+            return;
+        }
+
+        m_spot_lights.push_back(node->spot_light);
     }
 
     void Renderer::submit(const RenderObject& object) {
@@ -339,6 +348,19 @@ namespace hill::renderer {
                     program->upload_uniform_float1(std::format("u_point_lights.elements[{}].quadratic", i), point_light.quadratic);
                 }
                 program->upload_uniform_uint1("u_point_lights.count", static_cast<unsigned int>(m_point_lights.size()));
+
+                for (const auto& [i, spot_light] : m_spot_lights | std::views::enumerate) {
+                    program->upload_uniform_float3(std::format("u_spot_lights.elements[{}].color.ambient", i), spot_light.ambient_color);
+                    program->upload_uniform_float3(std::format("u_spot_lights.elements[{}].color.diffuse", i), spot_light.diffuse_color);
+                    program->upload_uniform_float3(std::format("u_spot_lights.elements[{}].color.specular", i), spot_light.specular_color);
+                    program->upload_uniform_float3(std::format("u_spot_lights.elements[{}].position", i), spot_light.position);
+                    program->upload_uniform_float3(std::format("u_spot_lights.elements[{}].direction", i), spot_light.direction);
+                    program->upload_uniform_float1(std::format("u_spot_lights.elements[{}].linear", i), spot_light.linear);
+                    program->upload_uniform_float1(std::format("u_spot_lights.elements[{}].quadratic", i), spot_light.quadratic);
+                    program->upload_uniform_float1(std::format("u_spot_lights.elements[{}].cutoff_inner", i), glm::cos(glm::radians(spot_light.cutoff_inner)));
+                    program->upload_uniform_float1(std::format("u_spot_lights.elements[{}].cutoff_outer", i), glm::cos(glm::radians(spot_light.cutoff_outer)));
+                }
+                program->upload_uniform_uint1("u_spot_lights.count", static_cast<unsigned int>(m_spot_lights.size()));
 
                 program->upload_uniform_float3("u_view_position", m_camera.position());
                 program->unuse();

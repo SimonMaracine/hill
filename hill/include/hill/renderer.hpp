@@ -65,6 +65,7 @@ namespace hill::renderer {
         void render_node(TraversalCtx& ctx, scene::ModelNode* node);
         void render_node(TraversalCtx& ctx, scene::DirectionalLightNode* node);
         void render_node(TraversalCtx& ctx, scene::PointLightNode* node);
+        void render_node(TraversalCtx& ctx, scene::SpotLightNode* node);
 
         void submit(const RenderObject& object);
         void draw_object(const RenderObject& object) const;
@@ -100,6 +101,7 @@ namespace hill::renderer {
         camera::Camera m_camera;
         std::optional<light::DirectionalLight> m_directional_light;
         std::vector<light::PointLight> m_point_lights;
+        std::vector<light::SpotLight> m_spot_lights;
 
         std::vector<RenderObject> m_objects;
         std::unordered_map<renderer_common::ShaderFeatureSet, std::weak_ptr<shader::Program>> m_programs;
@@ -136,5 +138,6 @@ namespace hill::renderer {
         friend class scene::ModelNode;
         friend class scene::DirectionalLightNode;
         friend class scene::PointLightNode;
+        friend class scene::SpotLightNode;
     };
 }

@@ -87,19 +87,19 @@ namespace hill::editor {
             glm::vec3 position_offset {};
 
             if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_W)) {
-                position_offset += m_camera.front;
+                position_offset += m_camera.direction;
             }
 
             if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_S)) {
-                position_offset -= m_camera.front;
+                position_offset -= m_camera.direction;
             }
 
             if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_A)) {
-                position_offset -= glm::normalize(glm::cross(m_camera.front, m_camera.UP));
+                position_offset -= glm::normalize(glm::cross(m_camera.direction, m_camera.UP));
             }
 
             if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_D)) {
-                position_offset += glm::normalize(glm::cross(m_camera.front, m_camera.UP));
+                position_offset += glm::normalize(glm::cross(m_camera.direction, m_camera.UP));
             }
 
             if (m_camera.control && ImGui::IsKeyDown(ImGuiKey_E)) {
@@ -116,7 +116,7 @@ namespace hill::editor {
 
             if (ImGui::IsKeyDown(ImGuiKey_Home)) {
                 m_camera.position = m_camera.POSITION;
-                m_camera.front = m_camera.FRONT;
+                m_camera.direction = m_camera.DIRECTION;
                 m_camera.pitch = m_camera.PITCH;
                 m_camera.yaw = m_camera.YAW;
             }
@@ -126,9 +126,9 @@ namespace hill::editor {
         direction.x = glm::cos(glm::radians(m_camera.yaw)) * glm::cos(glm::radians(m_camera.pitch));
         direction.y = glm::sin(glm::radians(m_camera.pitch));
         direction.z = glm::sin(glm::radians(m_camera.yaw)) * glm::cos(glm::radians(m_camera.pitch));
-        m_camera.front = glm::normalize(direction);
+        m_camera.direction = glm::normalize(direction);
 
-        renderer.m_camera.position_orientation(m_camera.position, m_camera.position + m_camera.front, m_camera.UP);
+        renderer.m_camera.position_orientation(m_camera.position, m_camera.position + m_camera.direction, m_camera.UP);
     }
 
     void Editor::performance(renderer::Renderer& renderer) {
@@ -278,10 +278,10 @@ namespace hill::editor {
 
         separator();
 
-        ImGui::DragFloat3("Direction", glm::value_ptr(node->directional_light.direction), 0.1f);
         ImGui::DragFloat3("Ambient", glm::value_ptr(node->directional_light.ambient_color), 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat3("Diffuse", glm::value_ptr(node->directional_light.diffuse_color), 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat3("Specular", glm::value_ptr(node->directional_light.specular_color), 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat3("Direction", glm::value_ptr(node->directional_light.direction), 0.1f);
     }
 
     void Editor::inspect(scene::PointLightNode* node) {
@@ -293,12 +293,32 @@ namespace hill::editor {
 
         separator();
 
-        ImGui::DragFloat3("Position", glm::value_ptr(node->point_light.position), 0.1f);
         ImGui::DragFloat3("Ambient", glm::value_ptr(node->point_light.ambient_color), 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat3("Diffuse", glm::value_ptr(node->point_light.diffuse_color), 0.01f, 0.0f, 1.0f);
         ImGui::DragFloat3("Specular", glm::value_ptr(node->point_light.specular_color), 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat3("Position", glm::value_ptr(node->point_light.position), 0.1f);
         ImGui::DragFloat("Linear", &node->point_light.linear, 0.001f, 0.0f, 1.0f);
         ImGui::DragFloat("Quadratic", &node->point_light.quadratic, 0.0001f, 0.0f, 1.0f);
+    }
+
+    void Editor::inspect(scene::SpotLightNode* node) {
+        ImGui::SeparatorText("Spot Light");
+
+        if (input_text("Name", m_buffer_name, sizeof(m_buffer_name))) {
+            node->m_name = m_buffer_name;
+        }
+
+        separator();
+
+        ImGui::DragFloat3("Ambient", glm::value_ptr(node->spot_light.ambient_color), 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat3("Diffuse", glm::value_ptr(node->spot_light.diffuse_color), 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat3("Specular", glm::value_ptr(node->spot_light.specular_color), 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat3("Position", glm::value_ptr(node->spot_light.position), 0.1f);
+        ImGui::DragFloat3("Direction", glm::value_ptr(node->spot_light.direction), 0.1f);
+        ImGui::DragFloat("Linear", &node->spot_light.linear, 0.001f, 0.0f, 1.0f);
+        ImGui::DragFloat("Quadratic", &node->spot_light.quadratic, 0.0001f, 0.0f, 1.0f);
+        ImGui::DragFloat("Cutoff Inner", &node->spot_light.cutoff_inner, 0.1f, 0.0f, 180.0f);
+        ImGui::DragFloat("Cutoff Outer", &node->spot_light.cutoff_outer, 0.1f, 0.0f, 180.0f);
     }
 
     void Editor::inspect(ModelMesh* mesh) {
@@ -372,19 +392,6 @@ namespace hill::editor {
             }
         }
     }
-
-    // bool Editor::material_basic(material::MaterialBasic* material) {
-    //     if (!material) {
-    //         return false;
-    //     }
-    //
-    //     ImGui::DragFloat3("Ambient", glm::value_ptr(material->ambient_color), 0.01f, 0.0f, 1.0f);
-    //     ImGui::DragFloat3("Diffuse", glm::value_ptr(material->diffuse_color), 0.01f, 0.0f, 1.0f);
-    //     ImGui::DragFloat3("Specular", glm::value_ptr(material->specular_color), 0.01f, 0.0f, 1.0f);
-    //     ImGui::DragFloat("Shininess", &material->shininess, 1.0f, 1.0f, 512.0f);
-    //
-    //     return true;
-    // }
 
     void Editor::world_origin(renderer::Renderer& renderer) {
         const float far = 100.0f;  // TODO

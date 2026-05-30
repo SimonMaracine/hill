@@ -137,4 +137,17 @@ namespace hill::scene {
     private:
         friend class renderer::Renderer;
     };
+
+    class SpotLightNode : public Node {
+    public:
+        explicit SpotLightNode(std::string name, const light::SpotLight& spot_light = {})
+            : Node(std::move(name)), spot_light(spot_light) {}
+
+        void renderer_process(renderer::Renderer& renderer, renderer::TraversalCtx& ctx) override;
+        void editor_inspect(editor::Editor& editor) override;
+
+        light::SpotLight spot_light;
+    private:
+        friend class renderer::Renderer;
+    };
 }

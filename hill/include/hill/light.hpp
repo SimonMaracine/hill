@@ -10,12 +10,21 @@ namespace hill::light {
     };
 
     struct DirectionalLight : BaseLight {
-        glm::vec3 direction {0.0f, 1.0f, 0.0f};
+        glm::vec3 direction {0.0f, -1.0f, 0.0f};
     };
 
-    struct PointLight : BaseLight{
+    struct PointLight : BaseLight {
         glm::vec3 position {};
         float linear {0.09f};
         float quadratic {0.032f};
+    };
+
+    struct SpotLight : BaseLight {
+        glm::vec3 position {};
+        glm::vec3 direction {0.0f, 0.0f, -1.0f};
+        float linear {0.09f};
+        float quadratic {0.032f};
+        float cutoff_inner = 10.0f;
+        float cutoff_outer = 20.0f;
     };
 }

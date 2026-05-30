@@ -19,6 +19,7 @@ namespace hill::scene {
     class ModelNode;
     class DirectionalLightNode;
     class PointLightNode;
+    class SpotLightNode;
 }
 
 namespace hill::editor {
@@ -41,6 +42,9 @@ namespace hill::editor {
 
         void update(renderer::Renderer& renderer);
         void update_camera(renderer::Renderer& renderer);
+
+        glm::vec3 camera_position() const { return m_camera.position; }
+        glm::vec3 camera_direction() const { return m_camera.direction; }
     private:
         void performance(renderer::Renderer& renderer);
 
@@ -57,6 +61,7 @@ namespace hill::editor {
         void inspect(scene::ModelNode* node);
         void inspect(scene::DirectionalLightNode* node);
         void inspect(scene::PointLightNode* node);
+        void inspect(scene::SpotLightNode* node);
         void inspect(ModelMesh* mesh);
 
         void nodes(scene::ModelNode* node);
@@ -77,12 +82,12 @@ namespace hill::editor {
         struct Camera {
             static constexpr glm::vec3 UP {0.0f, 1.0f, 0.0f};
             static constexpr glm::vec3 POSITION {0.0f, 3.0f, 30.0f};
-            static constexpr glm::vec3 FRONT {0.0f, 0.0f, -1.0f};
+            static constexpr glm::vec3 DIRECTION {0.0f, 0.0f, -1.0f};
             static constexpr float PITCH {};
             static constexpr float YAW = -90.0f;
 
             glm::vec3 position = POSITION;
-            glm::vec3 front = FRONT;
+            glm::vec3 direction = DIRECTION;
             float pitch = PITCH;
             float yaw = YAW;
             float move_speed_multiplier = 1.0f;
@@ -97,6 +102,7 @@ namespace hill::editor {
         friend class scene::ModelNode;
         friend class scene::DirectionalLightNode;
         friend class scene::PointLightNode;
+        friend class scene::SpotLightNode;
         friend struct ModelMesh;
     };
 }

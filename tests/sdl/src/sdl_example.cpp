@@ -138,6 +138,38 @@ void SdlExample::run() {
         throw std::runtime_error(std::format("SDL_ShowWindow: {}", SDL_GetError()));
     }
 
+    initialize();
+
+    while (m_running) {
+        SDL_Event event;
+
+        while (SDL_PollEvent(&event)) {
+            ImGui_ImplSDL3_ProcessEvent(&event);
+
+            switch (event.type) {
+                case SDL_EVENT_QUIT:
+                    m_running = false;
+                    break;
+                case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                    m_running = false;
+                    break;
+                case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+                    m_renderer->window_resize(event.window.data1, event.window.data2);
+                    break;
+            }
+        }
+
+        update();
+
+        m_renderer->render();
+
+        if (!SDL_GL_SwapWindow(m_window)) {
+            throw std::runtime_error(std::format("SDL_GL_SwapWindow: {}", SDL_GetError()));
+        }
+    }
+}
+
+void SdlExample::initialize() {
     hill::utility::Buffer buffer;
     hill::utility::read_file("assets/teapot.obj", buffer);
 
@@ -176,29 +208,11 @@ void SdlExample::run() {
     light2->point_light.position = glm::vec3(-5.0f, 1.0f, 0.0f);
     m_renderer->root_node()->child(light2);
 
-    while (m_running) {
-        SDL_Event event;
+    m_spotlight = std::make_shared<hill::scene::SpotLightNode>("Flashlight");
+    m_renderer->root_node()->child(m_spotlight);
+}
 
-        while (SDL_PollEvent(&event)) {
-            ImGui_ImplSDL3_ProcessEvent(&event);
-
-            switch (event.type) {
-                case SDL_EVENT_QUIT:
-                    m_running = false;
-                    break;
-                case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-                    m_running = false;
-                    break;
-                case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
-                    m_renderer->window_resize(event.window.data1, event.window.data2);
-                    break;
-            }
-        }
-
-        m_renderer->render();
-
-        if (!SDL_GL_SwapWindow(m_window)) {
-            throw std::runtime_error(std::format("SDL_GL_SwapWindow: {}", SDL_GetError()));
-        }
-    }
+void SdlExample::update() {
+    m_spotlight->spot_light.position = m_editor->camera_position();
+    m_spotlight->spot_light.direction = m_editor->camera_direction();
 }
