@@ -170,29 +170,31 @@ void SdlExample::run() {
 }
 
 void SdlExample::initialize() {
-    hill::utility::Buffer buffer;
-    hill::utility::read_file("assets/teapot.obj", buffer);
+    {
+        hill::file::Buffer buffer;
+        hill::file::read("assets/teapot/teapot.obj", buffer);
 
-    auto teapot = hill::scene::ModelNode::from_model(hill::model::Model(buffer));
-    teapot->translation(glm::vec3(7.0f, 2.0f, -7.0f));
-    teapot->rotation(glm::vec3(0.0f, -30.0f, 0.0f));
-    m_renderer->root_node()->child(teapot);
+        auto teapot = hill::scene::ModelNode::from_model(hill::model::Model(buffer));
+        teapot->translation(glm::vec3(7.0f, 2.0f, -7.0f));
+        teapot->rotation(glm::vec3(0.0f, -30.0f, 0.0f));
+        m_renderer->root_node()->child(teapot);
+    }
 
-    auto heart = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/heart/heart.obj")));
+    auto heart = hill::scene::ModelNode::from_model(hill::model::Model(hill::file::Path("assets/heart/heart.obj")));
     heart->translation(glm::vec3(-2.0f, 3.0f, 7.0f));
     heart->rotation(glm::vec3(-60.0f, 0.0f, 0.0f));
     heart->scale(glm::vec3(0.3f, 0.3f, 0.3f));
     m_renderer->root_node()->child(heart);
 
-    auto cube = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/cube/cube.glb")));
+    auto cube = hill::scene::ModelNode::from_model(hill::model::Model(hill::file::Path("assets/cube/cube.glb")));
     m_renderer->root_node()->child(cube);
 
-    auto tree = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/tree.fbx")));
+    auto tree = hill::scene::ModelNode::from_model(hill::model::Model(hill::file::Path("assets/tree/tree.fbx")));
     tree->translation(glm::vec3(-12.0f, 1.0f, -8.0f));
     tree->scale(glm::vec3(0.005f));
     m_renderer->root_node()->child(tree);
 
-    auto backpack = hill::scene::ModelNode::from_model(hill::model::Model(hill::utility::FilePath("assets/backpack/backpack.obj")));
+    auto backpack = hill::scene::ModelNode::from_model(hill::model::Model(hill::file::Path("assets/backpack/backpack.obj")));
     backpack->translation(glm::vec3(10.0f, 2.0f, 10.0f));
     m_renderer->root_node()->child(backpack);
 
@@ -210,6 +212,20 @@ void SdlExample::initialize() {
 
     m_spotlight = std::make_shared<hill::scene::SpotLightNode>("Flashlight");
     m_renderer->root_node()->child(m_spotlight);
+
+    {
+        hill::file::Buffer buffer;
+
+        hill::environment::SkyboxFaces skybox_faces;
+        hill::file::read("assets/sunset/px.png", buffer); skybox_faces.positive_x = hill::image::Image(buffer);
+        hill::file::read("assets/sunset/nx.png", buffer); skybox_faces.negative_x = hill::image::Image(buffer);
+        hill::file::read("assets/sunset/py.png", buffer); skybox_faces.positive_y = hill::image::Image(buffer);
+        hill::file::read("assets/sunset/ny.png", buffer); skybox_faces.negative_y = hill::image::Image(buffer);
+        hill::file::read("assets/sunset/pz.png", buffer); skybox_faces.positive_z = hill::image::Image(buffer);
+        hill::file::read("assets/sunset/nz.png", buffer); skybox_faces.negative_z = hill::image::Image(buffer);
+
+        m_renderer->skybox(m_renderer->skybox(skybox_faces));
+    }
 }
 
 void SdlExample::update() {

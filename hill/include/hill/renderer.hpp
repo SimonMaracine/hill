@@ -11,6 +11,7 @@
 #include "hill/camera.hpp"
 #include "hill/scene.hpp"
 #include "hill/light.hpp"
+#include "hill/environment.hpp"
 #include "hill/material.hpp"
 #include "hill/renderer_common.hpp"
 #include "hill/aabb.hpp"
@@ -43,6 +44,8 @@ namespace hill::renderer {
 
         void render();
         void window_resize(int width, int height);
+        void skybox(environment::Skybox skybox);
+        environment::Skybox skybox(const environment::SkyboxFaces& skybox_faces);
 
         scene::RootNode* root_node() const { return m_root_node.get(); }
 
@@ -56,6 +59,9 @@ namespace hill::renderer {
 
         void debug_initialize();
         void debug_render();
+
+        void skybox_initialize();
+        void skybox_render();
 
         void render_initialize();
         void render_begin();
@@ -77,7 +83,7 @@ namespace hill::renderer {
         std::shared_ptr<shader::Program> create_program(renderer_common::ShaderFeatureSet shader_feature_set) const;
         std::shared_ptr<shader::Program> get_or_create_program(renderer_common::ShaderFeatureSet shader_feature_set);
         std::shared_ptr<material::Material> initialize_material(const mesh::Material& raw_material, std::shared_ptr<material::Material> material);
-        std::shared_ptr<texture2d::Texture2D> get_or_create_texture(mesh::TextureSource texture_source);
+        std::shared_ptr<texture_2d::Texture2D> get_or_create_texture(mesh::TextureSource texture_source);
         std::vector<std::string> create_vertex_shader_sources(renderer_common::ShaderFeatureSet shader_feature_set) const;
         std::vector<std::string> create_fragment_shader_sources(renderer_common::ShaderFeatureSet shader_feature_set) const;
         static void setup_shader_features(renderer_common::ShaderFeatureSet shader_feature_set, std::vector<std::string>& sources);
@@ -97,20 +103,12 @@ namespace hill::renderer {
         int m_window_width {};
         int m_window_height {};
         glm::vec3 m_background_color {0.6f, 0.6f, 0.7f};
-
+        environment::Skybox m_skybox;
         camera::Camera m_camera;
-        std::optional<light::DirectionalLight> m_directional_light;
-        std::vector<light::PointLight> m_point_lights;
-        std::vector<light::SpotLight> m_spot_lights;
-
-        std::vector<RenderObject> m_objects;
-        std::unordered_map<renderer_common::ShaderFeatureSet, std::weak_ptr<shader::Program>> m_programs;
-        std::unordered_map<mesh::TextureSource, std::weak_ptr<texture2d::Texture2D>> m_textures;
 
         // Runtime scene hierarchy
         std::shared_ptr<scene::RootNode> m_root_node;
 
-        // Debug renderer
         struct DebugRenderer {
             struct Line {
                 glm::vec3 p1 {};
@@ -121,9 +119,25 @@ namespace hill::renderer {
             std::vector<Line> lines;
 
             std::shared_ptr<vertex_array::VertexArray> vertex_array;
-            std::weak_ptr<vertex_buffer::VertexBuffer> weak_vertex_buffer;
+            std::weak_ptr<vertex_buffer::VertexBuffer> w_vertex_buffer;
             std::shared_ptr<shader::Program> program;
         } m_debug_renderer;
+
+        struct SkyboxRenderer {
+            std::weak_ptr<texture_cubemap::TextureCubemap> w_texture;
+            std::shared_ptr<vertex_array::VertexArray> vertex_array;
+            std::shared_ptr<shader::Program> program;
+        } m_skybox_renderer;
+
+        struct MainRenderer {
+            std::optional<light::DirectionalLight> directional_light;
+            std::vector<light::PointLight> point_lights;
+            std::vector<light::SpotLight> spot_lights;
+
+            std::vector<RenderObject> objects;
+            std::unordered_map<renderer_common::ShaderFeatureSet, std::weak_ptr<shader::Program>> programs;
+            std::unordered_map<mesh::TextureSource, std::weak_ptr<texture_2d::Texture2D>> textures;
+        } m_main_renderer;
 
         // Performance data
         mutable struct {

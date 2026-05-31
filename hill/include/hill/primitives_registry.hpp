@@ -9,7 +9,8 @@ namespace hill::primitives_registry {
         VertexArray,
         Shader,
         Program,
-        Texture2D
+        Texture2D,
+        TextureCubemap
     };
 
     using Container = std::unordered_set<unsigned int>;

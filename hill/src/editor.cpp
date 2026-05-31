@@ -144,6 +144,9 @@ namespace hill::editor {
     void Editor::renderer(renderer::Renderer& renderer) {
         if (ImGui::Begin("Renderer")) {
             ImGui::ColorEdit3("Background Color", glm::value_ptr(renderer.m_background_color));
+
+            char buffer[16] {};  // FIXME
+            ImGui::InputText("Skybox", buffer, sizeof(buffer));
         }
 
         ImGui::End();

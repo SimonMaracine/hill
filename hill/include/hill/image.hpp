@@ -1,13 +1,13 @@
 #pragma once
 
-#include "hill/utility.hpp"
+#include "hill/file.hpp"
 #include "hill/error.hpp"
 
 namespace hill::image {
     class Image {
     public:
         Image() = default;
-        explicit Image(const utility::Buffer& buffer);
+        explicit Image(const file::Buffer& buffer);
         Image(const unsigned char* data, std::size_t size);
         ~Image();
 

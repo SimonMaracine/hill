@@ -14,11 +14,13 @@ target_sources(
         "src/primitives/common.cpp"
         "src/primitives/element_buffer.cpp"
         "src/primitives/shader.cpp"
-        "src/primitives/texture2d.cpp"
+        "src/primitives/texture_2d.cpp"
+        "src/primitives/texture_cubemap.cpp"
         "src/primitives/vertex_array.cpp"
         "src/primitives/vertex_buffer.cpp"
         "src/debug.cpp"
         "src/editor.cpp"
+        "src/file.cpp"
         "src/glad.cpp"
         "src/graphics_api.cpp"
         "src/image.cpp"
@@ -30,7 +32,6 @@ target_sources(
         "src/renderer_common.cpp"
         "src/scene.cpp"
         "src/task_manager.cpp"
-        "src/utility.cpp"
     PUBLIC
         FILE_SET HEADERS
         BASE_DIRS
@@ -39,7 +40,8 @@ target_sources(
             "include/hill/primitives/common.hpp"
             "include/hill/primitives/element_buffer.hpp"
             "include/hill/primitives/shader.hpp"
-            "include/hill/primitives/texture2d.hpp"
+            "include/hill/primitives/texture_2d.hpp"
+            "include/hill/primitives/texture_cubemap.hpp"
             "include/hill/primitives/vertex_array.hpp"
             "include/hill/primitives/vertex_buffer.hpp"
             "include/hill/aabb.hpp"
@@ -48,7 +50,9 @@ target_sources(
             "include/hill/debug.hpp"
             "include/hill/editor.hpp"
             "include/hill/editor_common.hpp"
+            "include/hill/environment.hpp"
             "include/hill/error.hpp"
+            "include/hill/file.hpp"
             "include/hill/glm.h++"
             "include/hill/graphics_api.hpp"
             "include/hill/image.hpp"
@@ -63,7 +67,6 @@ target_sources(
             "include/hill/renderer_common.hpp"
             "include/hill/scene.hpp"
             "include/hill/task_manager.hpp"
-            "include/hill/utility.hpp"
             "include/hill/windowing.hpp"
 )
 

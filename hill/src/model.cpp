@@ -16,7 +16,7 @@ namespace hill::model {
         };
     }
 
-    static std::shared_ptr<image::Image> load_material_texture(const aiMaterial* material, const aiScene* scene, aiTextureType texture_type, const utility::FilePath& parent_path, TraversalCtx& ctx) {
+    static std::shared_ptr<image::Image> load_material_texture(const aiMaterial* material, const aiScene* scene, aiTextureType texture_type, const file::Path& parent_path, TraversalCtx& ctx) {
         if (material->GetTextureCount(texture_type) == 0) {
             return nullptr;
         }
@@ -34,7 +34,7 @@ namespace hill::model {
             const bool encoded = texture->mHeight == 0;
 
             if (encoded) {
-                utility::Buffer buffer;
+                file::Buffer buffer;
                 buffer.resize(texture->mWidth);
                 std::memcpy(buffer.data(), texture->pcData, texture->mWidth);
 
@@ -44,8 +44,8 @@ namespace hill::model {
             throw ModelError("Raw image loading not implemented");
         }
 
-        utility::Buffer buffer;
-        utility::read_file(parent_path / std::filesystem::path(path.C_Str()), buffer);
+        file::Buffer buffer;
+        file::read(parent_path / std::filesystem::path(path.C_Str()), buffer);
 
         return ctx.processed_textures[path.C_Str()] = std::make_shared<image::Image>(buffer);
     }
@@ -73,7 +73,7 @@ namespace hill::model {
         return result_material;
     }
 
-    Model::Model(const utility::Buffer& buffer) {
+    Model::Model(const file::Buffer& buffer) {
         static constexpr auto flags = aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_GenBoundingBoxes;
 
         Assimp::Importer importer;
@@ -82,7 +82,7 @@ namespace hill::model {
         load(importer, scene);
     }
 
-    Model::Model(const utility::FilePath& file_path) {
+    Model::Model(const file::Path& file_path) {
         static constexpr auto flags = aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_GenBoundingBoxes;
 
         Assimp::Importer importer;

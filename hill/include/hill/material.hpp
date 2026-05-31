@@ -6,7 +6,7 @@
 #include <variant>
 
 #include "hill/primitives/shader.hpp"
-#include "hill/primitives/texture2d.hpp"
+#include "hill/primitives/texture_2d.hpp"
 #include "hill/glm.h++"
 
 namespace hill::renderer {
@@ -41,7 +41,7 @@ namespace hill::material {
         friend class Material;
     };
 
-    using Texture = std::pair<std::shared_ptr<texture2d::Texture2D>, unsigned int>;
+    using Texture = std::pair<std::shared_ptr<texture_2d::Texture2D>, unsigned int>;
 
     class Material {
     public:

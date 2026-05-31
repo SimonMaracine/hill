@@ -5,7 +5,7 @@
 #include <utility>
 
 namespace hill::image {
-    Image::Image(const utility::Buffer& buffer) {
+    Image::Image(const file::Buffer& buffer) {
         load(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size());
     }
 

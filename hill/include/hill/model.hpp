@@ -6,7 +6,7 @@
 #include <memory>
 
 #include "hill/mesh.hpp"
-#include "hill/utility.hpp"
+#include "hill/file.hpp"
 #include "hill/error.hpp"
 #include "hill/glm.h++"
 
@@ -40,8 +40,8 @@ namespace hill::model {
 
     class Model {
     public:
-        explicit Model(const utility::Buffer& buffer);
-        explicit Model(const utility::FilePath& file_path);
+        explicit Model(const file::Buffer& buffer);
+        explicit Model(const file::Path& file_path);
 
         const Node* root() const { return m_root.get(); }
     private:
@@ -50,7 +50,7 @@ namespace hill::model {
         mesh::MeshSource process_mesh(const aiMesh* mesh, const aiScene* scene, TraversalCtx& ctx) const;
 
         std::shared_ptr<Node> m_root;
-        utility::FilePath m_parent_path;
+        file::Path m_parent_path;
     };
 
     struct ModelError : error::Error {
