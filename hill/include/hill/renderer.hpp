@@ -46,6 +46,7 @@ namespace hill::renderer {
         void window_resize(int width, int height);
         void skybox(environment::Skybox skybox);
         environment::Skybox skybox(const environment::SkyboxFaces& skybox_faces);
+        void fog(const environment::Fog& fog);
 
         scene::RootNode* root_node() const { return m_root_node.get(); }
 
@@ -76,7 +77,8 @@ namespace hill::renderer {
         void submit(const RenderObject& object);
         void draw_object(const RenderObject& object) const;
 
-        void configure(scene::ModelNode* node);
+        void configure_render_objects(scene::ModelNode* node);
+        void configure_program(scene::ModelNode* node);
         void upload_program_shared_uniform_data();
 
         std::shared_ptr<vertex_array::VertexArray> create_vertex_array(const mesh::MeshSource& mesh_source) const;
@@ -103,7 +105,7 @@ namespace hill::renderer {
         int m_window_width {};
         int m_window_height {};
         glm::vec3 m_background_color {0.6f, 0.6f, 0.7f};
-        environment::Skybox m_skybox;
+        environment::Environment m_environment;
         camera::Camera m_camera;
 
         // Runtime scene hierarchy

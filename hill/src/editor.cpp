@@ -147,6 +147,18 @@ namespace hill::editor {
 
             char buffer[16] {};  // FIXME
             ImGui::InputText("Skybox", buffer, sizeof(buffer));
+
+            {
+                ImGui::SeparatorText("Fog");
+
+                if (ImGui::Checkbox("Enabled", &renderer.m_environment.fog.enabled)) {
+                    renderer.fog(renderer.m_environment.fog);
+                }
+
+                ImGui::DragFloat("Density", &renderer.m_environment.fog.density, 0.0005f, 0.0005f, 0.5f, "%.4f");
+                ImGui::DragFloat("Gradient", &renderer.m_environment.fog.gradient, 0.005f, 0.5f, 10.0f);
+                ImGui::ColorEdit3("Color", glm::value_ptr(renderer.m_environment.fog.color));
+            }
         }
 
         ImGui::End();

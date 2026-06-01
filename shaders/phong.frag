@@ -184,6 +184,10 @@ struct Material {
     float shininess;
 };
 
+vec3 fog(vec3 fog_color, vec3 object_color, float visibility) {
+    return mix(fog_color, object_color, visibility);
+}
+
 // -------------------------------------------------------------------
 
 in vec3 v_fragment_normal;
@@ -199,6 +203,11 @@ uniform Material u_material;
 
 #ifdef META_FEATURE_TEXTURE_COORDINATES
 in vec2 v_texture_coordinate;
+#endif
+
+#ifdef FEATURE_FOG
+in float v_fog_visibility;
+uniform vec3 u_fog_color;
 #endif
 
 PhongMaterial get_material() {
@@ -224,6 +233,11 @@ PhongMaterial get_material() {
 }
 
 void main() {
-    const vec3 color = phong(u_directional_light, u_point_lights, u_spot_lights, get_material(), v_fragment_position, v_fragment_normal, u_view_position);
+    vec3 color = phong(u_directional_light, u_point_lights, u_spot_lights, get_material(), v_fragment_position, v_fragment_normal, u_view_position);
+
+#ifdef FEATURE_FOG
+    color = fog(u_fog_color, color, v_fog_visibility);
+#endif
+
     o_color = vec4(color, 1.0);
 }

@@ -101,12 +101,13 @@ namespace hill::scene {
             glm::vec3 scale {1.0f};
         } m_local;
 
-        std::vector<std::shared_ptr<mesh::MeshSource>> m_mesh_sources;
+        std::vector<std::shared_ptr<mesh::MeshSource>> m_mesh_sources;  // Static
         std::vector<Mesh> m_meshes;
         std::vector<renderer_common::Object> m_render_objects;
         glm::mat4 m_world_transform = glm::identity<glm::mat4>();
         bool m_render_objects_dirty = true;
         bool m_world_transform_dirty = true;
+        bool m_program_dirty = true;
 
         friend class renderer::Renderer;
         friend class editor::Editor;

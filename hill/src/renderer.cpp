@@ -71,8 +71,8 @@ namespace hill::renderer {
     }
 
     void Renderer::skybox(environment::Skybox skybox) {
-        m_skybox = std::move(skybox);
-        m_skybox_renderer.w_texture = m_skybox.m_texture;
+        m_environment.skybox = std::move(skybox);
+        m_skybox_renderer.w_texture = m_environment.skybox.m_texture;
     }
 
     environment::Skybox Renderer::skybox(const environment::SkyboxFaces& skybox_faces) {
@@ -90,6 +90,24 @@ namespace hill::renderer {
         texture->unbind();
 
         return environment::Skybox(std::move(texture));
+    }
+
+    void Renderer::fog(const environment::Fog& fog) {
+        m_environment.fog = fog;
+
+        static void (*set_dirty_flag)(scene::Node*) = [](scene::Node* node) {
+            scene::ModelNode* model_node = dynamic_cast<scene::ModelNode*>(node);
+
+            if (model_node) {
+                model_node->m_program_dirty = true;
+            }
+
+            for (const auto& child : node->m_children | std::views::values) {
+                set_dirty_flag(child.get());
+            }
+        };
+
+        set_dirty_flag(m_root_node.get());
     }
 
     void Renderer::add_debug_line(glm::vec3 p1, glm::vec3 p2, glm::vec3 color) {
@@ -330,7 +348,11 @@ namespace hill::renderer {
     void Renderer::render_node(TraversalCtx& ctx, scene::ModelNode* node) {
         if (node->m_render_objects_dirty) {
             node->m_render_objects_dirty = false;
-            configure(node);
+            node->m_program_dirty = false;
+            configure_render_objects(node);
+        } else if (node->m_program_dirty) {
+            node->m_program_dirty = false;
+            configure_program(node);
         }
 
         const auto local_transform =
@@ -391,7 +413,7 @@ namespace hill::renderer {
         object.material->m_program->unuse();
     }
 
-    void Renderer::configure(scene::ModelNode* node) {
+    void Renderer::configure_render_objects(scene::ModelNode* node) {
         node->m_render_objects.reserve(node->meshes_count());
 
         for (const auto& [raw_mesh, mesh] : std::views::zip(node->m_mesh_sources, node->m_meshes)) {
@@ -399,17 +421,27 @@ namespace hill::renderer {
             object.elements_count = int(raw_mesh->indices.size());
             object.vertex_array = create_vertex_array(*raw_mesh);
             object.material = initialize_material(raw_mesh->material, mesh.material);
-            object.material->m_program = get_or_create_program(renderer_common::choose_shader_feature_set(*raw_mesh));
+            object.material->m_program = get_or_create_program(renderer_common::choose_shader_feature_set(*raw_mesh, m_environment));
+        }
+
+        debug::callback()(debug::Type::Information, std::format("Configured model node {}", static_cast<void*>(node)));
+    }
+
+    void Renderer::configure_program(scene::ModelNode* node) {
+        for (const auto& [raw_mesh, mesh, object] : std::views::zip(node->m_mesh_sources, node->m_meshes, node->m_render_objects)) {
+            object.material->m_program = get_or_create_program(renderer_common::choose_shader_feature_set(*raw_mesh, m_environment));
         }
 
         debug::callback()(debug::Type::Information, std::format("Configured model node {}", static_cast<void*>(node)));
     }
 
     void Renderer::upload_program_shared_uniform_data() {
-        for (const auto& w_program : m_main_renderer.programs | std::views::values) {
+        for (const auto& [shader_feature_set, w_program] : m_main_renderer.programs) {
             if (const auto program = w_program.lock(); program) {
                 program->use();
-                program->upload_uniform_float16("u_projection_view", m_camera.projection_view());
+
+                program->upload_uniform_float16("u_projection", m_camera.projection());
+                program->upload_uniform_float16("u_view", m_camera.view());
 
                 if (m_main_renderer.directional_light) {
                     program->upload_uniform_float3("u_directional_light.color.ambient", m_main_renderer.directional_light->ambient_color);
@@ -447,6 +479,13 @@ namespace hill::renderer {
                 program->upload_uniform_uint1("u_spot_lights.count", static_cast<unsigned int>(m_main_renderer.spot_lights.size()));
 
                 program->upload_uniform_float3("u_view_position", m_camera.position());
+
+                if (shader_feature_set & renderer_common::ShaderFeatureFog) {
+                    program->upload_uniform_float1("u_fog_density", m_environment.fog.density);
+                    program->upload_uniform_float1("u_fog_gradient", m_environment.fog.gradient);
+                    program->upload_uniform_float3("u_fog_color", m_environment.fog.color);
+                }
+
                 program->unuse();
             }
         }

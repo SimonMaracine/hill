@@ -30,6 +30,18 @@ namespace hill::environment {
         friend class renderer::Renderer;
     };
 
+    struct Fog {
+        bool enabled {};
+        float density {0.0075f};
+        float gradient {3.0f};
+        glm::vec3 color {0.6f};
+    };
+
+    struct Environment {
+        Skybox skybox;
+        Fog fog;
+    };
+
     inline constexpr float SKYBOX_POSITIONS[] = {
         -1.0f,  1.0f, -1.0f,
         -1.0f, -1.0f, -1.0f,

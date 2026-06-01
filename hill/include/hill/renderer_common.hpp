@@ -5,6 +5,7 @@
 #include "hill/primitives/vertex_array.hpp"
 #include "hill/material.hpp"
 #include "hill/mesh.hpp"
+#include "hill/environment.hpp"
 
 namespace hill::renderer_common {
     struct Object {
@@ -28,4 +29,5 @@ namespace hill::renderer_common {
     using ShaderFeatureSet = unsigned int;
 
     ShaderFeatureSet choose_shader_feature_set(const mesh::MeshSource& mesh_source);
+    ShaderFeatureSet choose_shader_feature_set(const mesh::MeshSource& mesh_source, const environment::Environment& environment);
 }

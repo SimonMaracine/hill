@@ -17,10 +17,6 @@ namespace hill::editor {
     class Editor;
 }
 
-namespace hill::shader_assembler {
-    class ShaderAssembler;
-}
-
 namespace hill::material {
     class Material;
 
@@ -65,6 +61,5 @@ namespace hill::material {
 
         friend class renderer::Renderer;
         friend class editor::Editor;
-        friend class shader_assembler::ShaderAssembler;
     };
 }
