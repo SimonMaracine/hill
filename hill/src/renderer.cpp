@@ -406,8 +406,32 @@ namespace hill::renderer {
 
         object.material->m_program->upload_uniform_float16("u_transform", object.world_transform);
 
+        switch (object.material->blend_mode) {
+            case mesh::BlendModeNone:
+                break;
+            case mesh::BlendModeDefault:
+                renderer_command::enable_blend();
+                renderer_command::blend_mode(renderer_command::BlendMode::Default);
+                break;
+            case mesh::BlendModeAdditive:
+                renderer_command::enable_blend();
+                renderer_command::blend_mode(renderer_command::BlendMode::Additive);
+                break;
+        }
+
         renderer_command::draw_elements_triangles(object.elements_count, object.elements_offset);
         m_performance.draw_calls++;
+
+        switch (object.material->blend_mode) {
+            case mesh::BlendModeNone:
+                break;
+            case mesh::BlendModeDefault:
+                renderer_command::disable_blend();
+                break;
+            case mesh::BlendModeAdditive:
+                renderer_command::disable_blend();
+                break;
+        }
 
         object.vertex_array->unbind();
         object.material->m_program->unuse();

@@ -25,6 +25,12 @@ namespace hill::mesh {
 
     using TextureSource = std::shared_ptr<image::Image>;
 
+    enum BlendMode : unsigned int {
+        BlendModeNone,
+        BlendModeDefault,
+        BlendModeAdditive
+    };
+
     struct Material {
         std::string name;
 
@@ -35,6 +41,9 @@ namespace hill::mesh {
 
         TextureSource texture_diffuse;
         TextureSource texture_specular;
+
+        // Flags
+        BlendMode blend_mode = BlendModeNone;
     };
 
     struct MeshSource {

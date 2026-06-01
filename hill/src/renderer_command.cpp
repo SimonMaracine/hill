@@ -104,11 +104,30 @@ namespace hill::renderer_command {
         glDepthFunc(depth_function_enum(function));
     }
 
+    void blend_mode(BlendMode mode) {
+        switch (mode) {
+            case BlendMode::Default:
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                break;
+            case BlendMode::Additive:
+                glBlendFunc(GL_ONE, GL_ONE);
+                break;
+        }
+    }
+
     void enable_depth_test() {
         glEnable(GL_DEPTH_TEST);
     }
 
     void disable_depth_test() {
         glDisable(GL_DEPTH_TEST);
+    }
+
+    void enable_blend() {
+        glEnable(GL_BLEND);
+    }
+
+    void disable_blend() {
+        glDisable(GL_BLEND);
     }
 }

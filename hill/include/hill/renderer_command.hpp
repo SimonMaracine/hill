@@ -18,6 +18,11 @@ namespace hill::renderer_command {
         Always
     };
 
+    enum class BlendMode {
+        Default,
+        Additive
+    };
+
     void clear(Buffers buffers);
     void draw_elements_triangles(int count, int offset = 0);
     void draw_arrays_triangles(int count);
@@ -34,6 +39,11 @@ namespace hill::renderer_command {
     void depth_mask(bool flag);
     void depth_function(DepthFunction function);
 
+    void blend_mode(BlendMode mode);
+
     void enable_depth_test();
     void disable_depth_test();
+
+    void enable_blend();
+    void disable_blend();
 }

@@ -70,6 +70,17 @@ namespace hill::model {
             result_material.shininess = value;
         }
 
+        if (int value; aiGetMaterialInteger(material, AI_MATKEY_BLEND_FUNC, &value) == aiReturn_SUCCESS) {
+            switch (value) {
+                case aiBlendMode_Default:
+                    result_material.blend_mode = mesh::BlendModeDefault;
+                    break;
+                case aiBlendMode_Additive:
+                    result_material.blend_mode = mesh::BlendModeAdditive;
+                    break;
+            }
+        }
+
         return result_material;
     }
 

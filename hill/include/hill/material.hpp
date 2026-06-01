@@ -7,6 +7,7 @@
 
 #include "hill/primitives/shader.hpp"
 #include "hill/primitives/texture_2d.hpp"
+#include "hill/mesh.hpp"
 #include "hill/glm.h++"
 
 namespace hill::renderer {
@@ -52,6 +53,8 @@ namespace hill::material {
         void set_float1(const std::string& name, float value);
         void set_float3(const std::string& name, glm::vec3 value);
         void set_texture(const std::string& name, Texture texture);
+
+        mesh::BlendMode blend_mode = mesh::BlendModeNone;
     private:
         std::unordered_map<std::string, float> m_floats1;
         std::unordered_map<std::string, glm::vec3> m_floats3;

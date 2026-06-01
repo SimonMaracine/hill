@@ -172,6 +172,7 @@ namespace hill::editor {
             primitives_object("Shaders", primitives_registry::primitives(primitives_registry::Primitive::Shader));
             primitives_object("Programs", primitives_registry::primitives(primitives_registry::Primitive::Program));
             primitives_object("Textures 2D", primitives_registry::primitives(primitives_registry::Primitive::Texture2D));
+            primitives_object("Textures Cubemap", primitives_registry::primitives(primitives_registry::Primitive::TextureCubemap));
         }
 
         ImGui::End();
@@ -196,11 +197,9 @@ namespace hill::editor {
     }
 
     void Editor::scene_hierarchy_tree(renderer::Renderer& renderer, scene::Node* node, std::string path) {
-        using namespace std::string_literals;
-
         const bool is_root = node->name().empty();
 
-        path += node->name().data() + "/"s;
+        path += node->name() + "/";
 
         static constexpr auto flags =
             ImGuiTreeNodeFlags_DrawLinesFull | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen;
@@ -371,6 +370,18 @@ namespace hill::editor {
 
         if (const auto iter = material.m_floats1.find("u_material.shininess"); iter != material.m_floats1.end()) {
             ImGui::DragFloat("Shininess", &iter->second, 1.0f, 1.0f, 512.0f);
+        }
+
+        constexpr const char* BLEND_MODE[] { "None", "Default", "Additive" };
+
+        if (ImGui::BeginCombo("Blend Mode", BLEND_MODE[material.blend_mode])) {
+            for (std::size_t i {}; i < std::size(BLEND_MODE); i++) {
+                if (ImGui::Selectable(BLEND_MODE[i], material.blend_mode == i)) {
+                    material.blend_mode = mesh::BlendMode(i);
+                }
+            }
+
+            ImGui::EndCombo();
         }
     }
 
