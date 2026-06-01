@@ -47,7 +47,7 @@ namespace hill::renderer {
             m_performance.transform_updates = 0;
         }
 
-        m_camera.projection(m_window_width, m_window_height, 45.0f, 0.01f, 200.0f);
+        m_camera.projection(m_window_width, m_window_height, 45.0f, 0.01f, 400.0f);
         renderer_command::viewport(m_window_width, m_window_height);
 
         renderer_command::clear_color({ m_background_color[0], m_background_color[1], m_background_color[2], 1.0f });

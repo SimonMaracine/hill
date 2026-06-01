@@ -184,7 +184,10 @@ struct Material {
     float shininess;
 };
 
-vec3 fog(vec3 fog_color, vec3 object_color, float visibility) {
+vec3 fog(vec3 fragment_position, vec3 view_position, float density, float gradient, vec3 fog_color, vec3 object_color) {
+    const float distance = length(fragment_position - view_position);
+    const float visibility = clamp(exp(-pow(distance * density, gradient)), 0.0, 1.0);
+
     return mix(fog_color, object_color, visibility);
 }
 
@@ -206,7 +209,8 @@ in vec2 v_texture_coordinate;
 #endif
 
 #ifdef FEATURE_FOG
-in float v_fog_visibility;
+uniform float u_fog_density;
+uniform float u_fog_gradient;
 uniform vec3 u_fog_color;
 #endif
 
@@ -236,7 +240,7 @@ void main() {
     vec3 color = phong(u_directional_light, u_point_lights, u_spot_lights, get_material(), v_fragment_position, v_fragment_normal, u_view_position);
 
 #ifdef FEATURE_FOG
-    color = fog(u_fog_color, color, v_fog_visibility);
+    color = fog(v_fragment_position, u_view_position, u_fog_density, u_fog_gradient, u_fog_color, color);
 #endif
 
     o_color = vec4(color, 1.0);
