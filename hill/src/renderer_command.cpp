@@ -28,6 +28,29 @@ namespace hill::renderer_command {
         std::unreachable();
     }
 
+    static constexpr unsigned int depth_function_enum(DepthFunction function) {
+        switch (function) {
+            case DepthFunction::Never:
+                return GL_NEVER;
+            case DepthFunction::Less:
+                return GL_LESS;
+            case DepthFunction::Equal:
+                return GL_EQUAL;
+            case DepthFunction::LEqual:
+                return GL_LEQUAL;
+            case DepthFunction::Greater:
+                return GL_GREATER;
+            case DepthFunction::NotEqual:
+                return GL_NOTEQUAL;
+            case DepthFunction::GEqual:
+                return GL_GEQUAL;
+            case DepthFunction::Always:
+                return GL_ALWAYS;
+        }
+
+        std::unreachable();
+    }
+
     void clear(Buffers buffers) {
         glClear(buffers_enum(buffers));
     }
@@ -75,6 +98,10 @@ namespace hill::renderer_command {
 
     void depth_mask(bool flag) {
         glDepthMask(flag ? GL_TRUE : GL_FALSE);
+    }
+
+    void depth_function(DepthFunction function) {
+        glDepthFunc(depth_function_enum(function));
     }
 
     void enable_depth_test() {

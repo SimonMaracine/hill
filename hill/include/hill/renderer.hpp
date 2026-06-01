@@ -61,7 +61,7 @@ namespace hill::renderer {
         void debug_render();
 
         void skybox_initialize();
-        void skybox_render();
+        void skybox_render() const;
 
         void render_initialize();
         void render_begin();

@@ -53,13 +53,12 @@ namespace hill::renderer {
         renderer_command::clear_color({ m_background_color[0], m_background_color[1], m_background_color[2], 1.0f });
         renderer_command::clear(renderer_command::Buffers::CD);
 
-        skybox_render();
-
         TraversalCtx ctx;
         render_begin();
         render_traverse_tree(ctx, m_root_node.get());
         render_end();
 
+        skybox_render();
         debug_render();
         imgui_render();
 
@@ -269,7 +268,7 @@ namespace hill::renderer {
         }
     }
 
-    void Renderer::skybox_render() {
+    void Renderer::skybox_render() const {
         const auto texture = m_skybox_renderer.w_texture.lock();
 
         if (!texture) {
@@ -282,12 +281,12 @@ namespace hill::renderer {
         texture->bind();
         m_skybox_renderer.program->upload_uniform_float16("u_projection_view", m_camera.projection() * glm::mat4(glm::mat3(m_camera.view())));
 
-        renderer_command::depth_mask(false);
+        renderer_command::depth_function(renderer_command::DepthFunction::LEqual);
 
         renderer_command::draw_arrays_triangles(36);
         m_performance.draw_calls++;
 
-        renderer_command::depth_mask(true);
+        renderer_command::depth_function(renderer_command::DepthFunction::Less);
 
         m_skybox_renderer.vertex_array->unbind();
         m_skybox_renderer.program->unuse();

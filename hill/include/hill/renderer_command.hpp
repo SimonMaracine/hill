@@ -7,6 +7,17 @@ namespace hill::renderer_command {
         C, D, S, CD, CS, DS, CDS
     };
 
+    enum class DepthFunction {
+        Never,
+        Less,
+        Equal,
+        LEqual,
+        Greater,
+        NotEqual,
+        GEqual,
+        Always
+    };
+
     void clear(Buffers buffers);
     void draw_elements_triangles(int count, int offset = 0);
     void draw_arrays_triangles(int count);
@@ -21,6 +32,7 @@ namespace hill::renderer_command {
     void viewport(int width, int height);
 
     void depth_mask(bool flag);
+    void depth_function(DepthFunction function);
 
     void enable_depth_test();
     void disable_depth_test();

@@ -8,5 +8,6 @@ uniform mat4 u_projection_view;
 
 void main() {
     v_position = a_position;
-    gl_Position = u_projection_view * vec4(a_position, 1.0);
+    const vec4 position = u_projection_view * vec4(a_position, 1.0);
+    gl_Position = position.xyww;
 }
